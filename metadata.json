@@ -1,0 +1,6 @@
+{
+  "name": "Career Copilot",
+  "description": "An AI-powered career companion providing interactive CV analysis, resume generation, customizable interview prep with mock sessions, personal learning roadmaps, and chat-based career mentoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

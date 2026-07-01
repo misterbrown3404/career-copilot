@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Space+Grotesk:wght@300..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+
+  /* Map the default green theme colors to a high-end Indigo-Violet palette */
+  --color-green-50: #eef2ff;
+  --color-green-100: #e0e7ff;
+  --color-green-200: #c7d2fe;
+  --color-green-300: #a5b4fc;
+  --color-green-400: #6366f1; /* Vibrant Indigo */
+  --color-green-500: #4f46e5; /* Rich Indigo */
+  --color-green-600: #4338ca;
+  --color-green-700: #3730a3;
+  --color-green-800: #312e81;
+  --color-green-900: #1e1b4b; /* Indigo-900 */
+  --color-green-950: #0f0f1d; /* Very deep dark violet-indigo base */
+}
+
+/* Print CSS break logic */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #resume-printable-canvas, #resume-printable-canvas * {
+    visibility: visible;
+  }
+  #resume-printable-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+}
+
+/* Custom global utilities */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

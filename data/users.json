@@ -1,0 +1,26 @@
+{
+  "abdulsalamjibril5@gmail.com": {
+    "name": "Super Admin",
+    "email": "abdulsalamjibril5@gmail.com",
+    "password": "632af36622cc7ae2fb4b9f3e43c3512df36ff943e8cc92cf39b3c91fbc686e0c",
+    "targetRole": "System Administrator",
+    "targetIndustry": "Tech Operations",
+    "experienceLevel": "Senior Executive",
+    "resumeScore": 100,
+    "emailVerified": true,
+    "verificationCode": "000000",
+    "role": "admin"
+  },
+  "annurdevelopers@gmail.com": {
+    "name": "jibril",
+    "email": "annurdevelopers@gmail.com",
+    "password": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "targetRole": "flutter",
+    "targetIndustry": "saas",
+    "experienceLevel": "Mid",
+    "resumeScore": 0,
+    "emailVerified": false,
+    "verificationCode": "963146",
+    "role": "user"
+  }
+}
