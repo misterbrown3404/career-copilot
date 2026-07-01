@@ -24,14 +24,6 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      - name: Ensure required secrets exist in Vercel
-        run: |
-          set -e
-          for var in GEMINI_API_KEY SUPABASE_URL SUPABASE_KEY RESEND_API_KEY RAPIDAPI_KEY APP_URL; do
-            if ! vercel env ls --token=${{ secrets.VERCEL_TOKEN }} --scope=project 2>/dev/null | grep -qi "^${var}"; then
-              echo "${{ secrets[var] }}" | vercel env add $var production --token=${{ secrets.VERCEL_TOKEN }}
-            fi
-          done
       - name: Build Project
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
