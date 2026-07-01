@@ -3,7 +3,6 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
-import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
@@ -72,6 +71,10 @@ app.use((req, res, next) => {
     req.params = sanitizeObject(req.params);
   }
   next();
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ==========================================
@@ -1197,6 +1200,14 @@ app.post('/api/user/data/save', async (req, res) => {
   }
 });
 
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not Found' });
+});
+
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[EXPRESS] Unhandled error:', err);
+  res.status(err.status || 500).json({ error: 'Internal Server Error' });
+});
 
 // ==========================================
 // EXPORT FOR VERCEL SERVERLESS
@@ -1208,27 +1219,50 @@ export default app;
 // LOCAL DEVELOPMENT ENTRYPOINT
 // ==========================================
 
-if (process.env.VERCEL !== '1') {
-  startServer();
+if (!process.env.VERCEL) {
+  (async () => {
+    try {
+      await startServer();
+    } catch (err) {
+      console.error('[SERVER] Failed to start local server:', err);
+      process.exit(1);
+    }
+  })();
 }
 
 async function startServer() {
   await seedAdminUser();
-  
+
   if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-    console.log('Vite middleware mounted for local development.');
+    try {
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+      console.log('Vite middleware mounted for local development.');
+    } catch (err) {
+      console.error('[SERVER] Vite initialization failed, falling back to static files:', err);
+      const distPath = path.join(process.cwd(), 'dist');
+      if (fs.existsSync(distPath)) {
+        app.use(express.static(distPath));
+        app.get('*', (req, res) => {
+          res.sendFile(path.join(distPath, 'index.html'));
+        });
+      }
+    }
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-    console.log('Serving compiled static assets in production mode.');
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+      console.log('Serving compiled static assets in production mode.');
+    } else {
+      console.warn('[SERVER] dist directory not found in production mode.');
+    }
   }
 
   app.listen(PORT, '0.0.0.0', () => {
