@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
@@ -132,6 +133,24 @@ const authMiddleware = (req: express.Request, res: express.Response, next: expre
   next();
 };
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many authentication attempts. Please try again later.' }
+});
+
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: 'AI request limit reached. Please wait before trying again.' }
+});
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests. Please try again later.' }
+});
+
 // ==========================================
 // LIVE PERSISTENCE ENGINE (Supabase DB)
 // ==========================================
@@ -198,7 +217,7 @@ if (isGeminiEnabled) {
 // ==========================================
 // API ROUTE: Analyze CV
 // ==========================================
-app.post('/api/gemini/analyze-cv', async (req, res) => {
+app.post('/api/gemini/analyze-cv', aiLimiter, async (req, res) => {
   const { cvText, targetRole } = req.body;
   if (!cvText) {
     return res.status(400).json({ error: 'CV content is required for analysis.' });
@@ -265,7 +284,7 @@ ${cvText}`;
 // ==========================================
 // API ROUTE: Optimize Bullets (Resume Lab)
 // ==========================================
-app.post('/api/gemini/generate-bullets', async (req, res) => {
+app.post('/api/gemini/generate-bullets', aiLimiter, async (req, res) => {
   const { bullet, targetRole } = req.body;
   if (!bullet) {
     return res.status(400).json({ error: 'Bullet text is required.' });
@@ -307,7 +326,7 @@ Return a JSON object with:
 // ==========================================
 // API ROUTE: Career Mentor
 // ==========================================
-app.post('/api/gemini/mentor-chat', async (req, res) => {
+app.post('/api/gemini/mentor-chat', aiLimiter, async (req, res) => {
   const { messages, mentorId, mentorDetails } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Messages history is required.' });
@@ -356,7 +375,7 @@ Keep your answers professional yet warm, and conversational. Speak directly as $
 // ==========================================
 // API ROUTE: Learning Roadmap
 // ==========================================
-app.post('/api/gemini/generate-roadmap', async (req, res) => {
+app.post('/api/gemini/generate-roadmap', aiLimiter, async (req, res) => {
   const { targetRole, targetIndustry } = req.body;
   const roleName = targetRole || 'Full Stack Engineer';
   const industryName = targetIndustry || 'SaaS';
@@ -429,7 +448,7 @@ Ensure the roadmap nodes flow sequentially from foundation to advanced.`;
 // ==========================================
 // API ROUTE: Interview Coaching (Feedback)
 // ==========================================
-app.post('/api/gemini/interview-question', async (req, res) => {
+app.post('/api/gemini/interview-question', aiLimiter, async (req, res) => {
   const { sessionState, lastAnswer } = req.body;
   if (!sessionState) {
     return res.status(400).json({ error: 'Session state is required.' });
@@ -502,7 +521,7 @@ Return a JSON array of exactly 3 strings representing the questions. Ensure the 
 // ==========================================
 // API ROUTE: Tailor CV for Job (App Tracker)
 // ==========================================
-app.post('/api/gemini/tailor-application', async (req, res) => {
+app.post('/api/gemini/tailor-application', aiLimiter, async (req, res) => {
   const { company, role, cvText } = req.body;
   if (!company || !role) {
     return res.status(400).json({ error: 'Company name and job role are required.' });
@@ -551,7 +570,7 @@ function enrichSearchResults(results: any[], q: string, loc: string, cntry: stri
   return results;
 }
 
-app.get('/api/jobs/search', async (req, res) => {
+app.get('/api/jobs/search', generalLimiter, async (req, res) => {
   const { provider, query, location, country, company } = req.query;
   const apiKey = process.env.RAPIDAPI_KEY;
 
@@ -705,7 +724,7 @@ app.get('/api/jobs/search', async (req, res) => {
 // ==========================================
 
 // Register a new user with verification code
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', authLimiter, async (req, res) => {
   const { name, email, password, targetRole, targetIndustry, experienceLevel } = req.body;
   if (!email || !password || !name) {
     return res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -760,7 +779,7 @@ await supabase.from('users').insert({
 });
 
 // Verify 6-digit code
-app.post('/api/auth/verify-email', async (req, res) => {
+app.post('/api/auth/verify-email', authLimiter, async (req, res) => {
   const { email, code } = req.body;
   if (!email || !code) {
     return res.status(400).json({ error: 'Email and verification code are required.' });
@@ -801,7 +820,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
 });
 
 // Login user
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required.' });
@@ -848,7 +867,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Resend verification code
-app.post('/api/auth/resend-code', async (req, res) => {
+app.post('/api/auth/resend-code', authLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) {
     return res.status(400).json({ error: 'Email is required.' });
@@ -893,7 +912,7 @@ app.post('/api/auth/resend-code', async (req, res) => {
 // ==========================================
 
 // Get all registered users (admin only)
-app.get('/api/admin/users', async (req, res) => {
+app.get('/api/admin/users', generalLimiter, async (req, res) => {
   const adminEmail = String(req.query.adminEmail || '').trim().toLowerCase();
 
   if (adminEmail !== 'abdulsalamjibril5@gmail.com') {
@@ -923,7 +942,7 @@ app.get('/api/admin/users', async (req, res) => {
 });
 
 // Send newsletter to users (admin only)
-app.post('/api/admin/send-newsletter', (req, res) => {
+app.post('/api/admin/send-newsletter', generalLimiter, (req, res) => {
   const { adminEmail, subject, content, recipientEmails } = req.body;
 
   if (adminEmail?.trim().toLowerCase() !== 'abdulsalamjibril5@gmail.com') {
@@ -944,7 +963,7 @@ app.post('/api/admin/send-newsletter', (req, res) => {
 });
 
 // Load full live user data
-app.get('/api/user/data', authMiddleware, async (req, res) => {
+app.get('/api/user/data', authMiddleware, generalLimiter, async (req, res) => {
   const userEmail = (req as any).user.email;
 
   try {
@@ -982,7 +1001,7 @@ app.get('/api/user/data', authMiddleware, async (req, res) => {
 });
 
 // Save specific live user data section
-app.post('/api/user/data/save', authMiddleware, async (req, res) => {
+app.post('/api/user/data/save', authMiddleware, generalLimiter, async (req, res) => {
   const userEmail = (req as any).user.email;
   const { type, data } = req.body;
   if (!type) {
