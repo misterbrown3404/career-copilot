@@ -4,7 +4,7 @@ import { LogIn, UserPlus, Key, Mail, User, Briefcase, ShieldAlert, Sparkles, Ref
 import { UserProfile } from '../types';
 
 interface LoginViewProps {
-  onLogin: (profile: UserProfile) => void;
+  onLogin: (profile: UserProfile, token?: string) => void;
   isModal?: boolean;
 }
 
@@ -85,7 +85,7 @@ export default function LoginView({ onLogin, isModal = false }: LoginViewProps) 
           setError('Your email is not verified yet. We generated a verification code for you.');
         } else {
           // Successfully logged in
-          onLogin(data.user);
+          onLogin(data.user, data.token);
         }
       }
     } catch (err: any) {
@@ -120,7 +120,7 @@ export default function LoginView({ onLogin, isModal = false }: LoginViewProps) 
 
       setSuccess('Email successfully verified! Signing you in...');
       setTimeout(() => {
-        onLogin(data.user);
+        onLogin(data.user, data.token);
       }, 1000);
     } catch (err: any) {
       setError(err.message || 'Error verifying code.');

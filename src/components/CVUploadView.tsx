@@ -8,7 +8,6 @@ import {
   AlertCircle, 
   ArrowRight, 
   RotateCcw,
-  Plus,
   Loader2,
   ShieldAlert
 } from 'lucide-react';
@@ -53,68 +52,32 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
     }
   };
 
-  const processDummyFileLoad = (fileName: string) => {
-    setFileError(null);
-    setFileSuccess('Sample resume loaded successfully!');
-    setCvText(sanitizeString(`ALEX RIVERA
-alex.rivera@example.com | +1 (555) 019-2834 | San Francisco, CA
-
-PROFESSIONAL SUMMARY
-Detail-oriented Full Stack Developer with 3 years of experience. Experienced in React, Express, and PostgreSQL database updates. Looking to make an impact as a ${targetRole}.
-
-EXPERIENCE
-InnovateTech Solutions | Full Stack Developer | 2024 - Present
-- Maintained responsive React frontend features and microservices.
-- Helped migrate databases to PostgreSQL to improve query times.
-- Worked with product teams on component libraries and hooks.
-
-PixelForge Studios | Junior Web Engineer | 2023 - 2024
-- Developed client websites using HTML, Tailwind CSS, TypeScript, and React.
-- Fixed layout issues and made components responsive.
-- Wrote basic unit tests covering frontend routers.`));
-  };
-
   const validateAndProcessFile = (file: File) => {
     setFileError(null);
     setFileSuccess(null);
 
-    // 1. File size protection (max 2MB)
-    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
-      setFileError(`Security Alert: File exceeds the maximum 2MB size limit (${(file.size / 1024 / 1024).toFixed(2)}MB). Upload blocked.`);
+      setFileError(`File exceeds the maximum 10MB size limit. Upload blocked.`);
       return;
     }
 
-    // 2. File extension white-listing
-    const allowedExtensions = ['.txt', '.pdf', '.doc', '.docx'];
+    const allowedExtensions = ['.pdf', '.doc', '.docx'];
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
     const fileName = file.name.toLowerCase();
     const matchesExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+    const matchesMime = allowedMimeTypes.includes(file.type);
 
-    if (!matchesExtension) {
-      setFileError('Security Alert: Unsupported file format. Only PDF, DOCX, DOC, and TXT files are permitted.');
+    if (!matchesExtension || !matchesMime) {
+      setFileError('Unsupported file format. Only PDF and DOCX files are permitted.');
       return;
     }
 
-    // 3. File extraction and/or notices
-    if (fileName.endsWith('.txt')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const rawText = event.target?.result as string;
-        if (rawText) {
-          const cleanText = sanitizeString(rawText);
-          setCvText(cleanText);
-          setFileSuccess(`"${file.name}" read and sanitized successfully! Review contents below.`);
-        } else {
-          setFileError('Could not extract any content from the text file.');
-        }
-      };
-      reader.onerror = () => {
-        setFileError('Failed to read text file securely.');
-      };
-      reader.readAsText(file);
-    } else {
-      setFileSuccess(`Safe metadata verified for "${file.name}". Client-side plain text sandbox restricts execution. Please paste raw text content below or load our safe developer sample!`);
-    }
+    setFileSuccess(`File "${file.name}" validated successfully. Please paste the extracted text content below for analysis.`);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -230,24 +193,18 @@ PixelForge Studios | Junior Web Engineer | 2023 - 2024
               </div>
 
               <div>
-                <label htmlFor="cv-preset" className={`block text-xs font-display font-bold uppercase tracking-wider mb-1.5 ${
+                <label htmlFor="cv-preset" className={`block text-xs font-display font-bold uppercase tracking-wider ${
                   isLight ? 'text-neutral-600' : 'text-neutral-400'
                 }`}>
                   Need a sample resume?
                 </label>
-                <button
-                  type="button"
-                  onClick={() => processDummyFileLoad('sample.txt')}
-                  className={`w-full text-left px-4 py-2 text-sm rounded-lg border border-dashed font-display font-bold uppercase tracking-wider flex items-center justify-between cursor-pointer transition-all ${
-                    isLight 
-                      ? 'border-indigo-400/30 text-indigo-600 bg-indigo-50 hover:bg-indigo-100/50' 
-                      : 'border-green-400/30 text-green-400 bg-green-400/5 hover:bg-green-400/10'
-                  }`}
-                  aria-label="Load pre-filled sample resume text"
-                >
-                  <span>Load Sample Resume Text</span>
-                  <Plus className="w-4 h-4" />
-                </button>
+                <span className={`w-full text-left px-4 py-2 text-sm rounded-lg border border-dashed font-display font-bold uppercase tracking-wider flex items-center justify-between ${
+                  isLight 
+                    ? 'border-neutral-200 text-neutral-400 bg-neutral-50' 
+                    : 'border-neutral-800 text-neutral-500 bg-neutral-900/50'
+                }`}>
+                  <span>Sample not available</span>
+                </span>
               </div>
             </div>
 
@@ -290,14 +247,14 @@ PixelForge Studios | Junior Web Engineer | 2023 - 2024
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept=".txt,.pdf,.doc,.docx"
+                accept=".pdf,.doc,.docx"
                 onChange={handleFileChange}
               />
               <FileUp className="w-8 h-8 text-neutral-500 mb-2" />
               <p className={`text-sm font-display font-bold uppercase tracking-wide ${isLight ? 'text-neutral-800' : 'text-neutral-250'}`}>
                 Drag & Drop CV or browse computer
               </p>
-              <p className="text-neutral-500 text-xs mt-1">Supports PDF, DOCX, TXT (loads as editable text below)</p>
+              <p className="text-neutral-500 text-xs mt-1">Supports PDF, DOCX</p>
             </div>
 
             {/* Paste Box */}

@@ -64,26 +64,34 @@ export default function App() {
 
   // Restore session
   useEffect(() => {
+    const token = localStorage.getItem('auth_token');
     const savedEmail = localStorage.getItem('user_email');
-    if (savedEmail) {
-      const restoreSession = async () => {
-        try {
-          const res = await fetch(`/api/user/data?email=${encodeURIComponent(savedEmail)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.profile) {
-              setUser(data.profile);
-              setIsLoggedIn(true);
-            }
-          } else {
-            localStorage.removeItem('user_email');
+    if (!token && !savedEmail) return;
+
+    const restoreSession = async () => {
+      try {
+        const headers: Record<string, string> = { ...getAuthHeaders() };
+        const res = await fetch('/api/user/data', {
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers
           }
-        } catch (err) {
-          console.error('Session restore failed:', err);
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile) {
+            setUser(data.profile);
+            setIsLoggedIn(true);
+          }
+        } else {
+          localStorage.removeItem('user_email');
+          localStorage.removeItem('auth_token');
         }
-      };
-      restoreSession();
-    }
+      } catch (err) {
+        console.error('Session restore failed:', err);
+      }
+    };
+    restoreSession();
   }, []);
 
   // Load live data from server on login
@@ -91,7 +99,12 @@ export default function App() {
     if (isLoggedIn && user?.email) {
       const fetchUserData = async () => {
         try {
-          const res = await fetch(`/api/user/data?email=${encodeURIComponent(user.email)}`);
+          const res = await fetch('/api/user/data', {
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders()
+            }
+          });
           if (res.ok) {
             const data = await res.json();
             if (data.profile) {
@@ -130,9 +143,11 @@ export default function App() {
     if (isLoggedIn && user?.email) {
       fetch('/api/user/data/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({
-          email: user.email,
           type: 'applications',
           data: applications
         })
@@ -145,9 +160,11 @@ export default function App() {
     if (isLoggedIn && user?.email && resumeDetails && (resumeDetails.personal.fullName || resumeDetails.experience.length > 0)) {
       fetch('/api/user/data/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({
-          email: user.email,
           type: 'resume',
           data: resumeDetails
         })
@@ -160,9 +177,11 @@ export default function App() {
     if (isLoggedIn && user?.email && user.name) {
       fetch('/api/user/data/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({
-          email: user.email,
           type: 'profile',
           data: {
             name: user.name,
@@ -192,8 +211,11 @@ export default function App() {
     }
   }, [isLoggedIn, user?.email, activeTab]);
 
-  const handleLogin = (profile: UserProfile) => {
+  const handleLogin = (profile: UserProfile, token?: string) => {
     localStorage.setItem('user_email', profile.email);
+    if (token) {
+      localStorage.setItem('auth_token', token);
+    }
     setUser(profile);
     setIsLoggedIn(true);
     const isAdmin = profile.email?.toLowerCase().trim() === 'abdulsalamjibril5@gmail.com';
@@ -202,11 +224,17 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('user_email');
+    localStorage.removeItem('auth_token');
     setIsLoggedIn(false);
     setUser(emptyUserProfile);
     setApplications([]);
     setResumeDetails(emptyResumeDetails);
     setActiveTab('dashboard');
+  };
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
   const handleUpdateScore = (score: number) => {

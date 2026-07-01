@@ -63,6 +63,11 @@ export default function SettingsView({ user, setUser, theme = 'dark' }: Settings
   // Avatar file handling
   const handleAvatarFile = (file: File) => {
     if (!file) return;
+    const allowedImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+    if (!allowedImageTypes.includes(file.type)) {
+      alert('Invalid file type. Please upload an image file (PNG, JPG, WEBP, GIF).');
+      return;
+    }
     if (file.size > 1.5 * 1024 * 1024) {
       alert('Avatar image is too large! Please choose an image smaller than 1.5MB.');
       return;

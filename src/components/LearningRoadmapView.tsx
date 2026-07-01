@@ -35,14 +35,19 @@ export default function LearningRoadmapView({ user, theme = 'dark' }: LearningRo
     const loadRoadmap = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/user/data?email=${encodeURIComponent(user.email)}`);
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch('/api/user/data', {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.roadmap && data.roadmap.length > 0) {
             setNodes(data.roadmap);
             setSelectedNode(data.roadmap[0]);
           } else {
-            // Auto generate if empty so user gets a live experience immediately
             await generateLiveRoadmap();
           }
         }
@@ -60,11 +65,14 @@ export default function LearningRoadmapView({ user, theme = 'dark' }: LearningRo
   const saveRoadmapChanges = async (updatedNodes: RoadmapNode[]) => {
     if (!user?.email) return;
     try {
+      const token = localStorage.getItem('auth_token');
       await fetch('/api/user/data/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
-          email: user.email,
           type: 'roadmap',
           data: updatedNodes
         })

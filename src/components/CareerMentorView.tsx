@@ -47,11 +47,16 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
 
     const loadChats = async () => {
       try {
-        const res = await fetch(`/api/user/data?email=${encodeURIComponent(user.email)}`);
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch('/api/user/data', {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.chats && Object.keys(data.chats).length > 0) {
-            // Merge loaded logs with welcome messages if any mentors are missing
             const merged = { ...chatHistories, ...data.chats };
             setChatHistories(merged);
           }
@@ -68,11 +73,14 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
   const saveChatsToServer = async (updatedChats: Record<string, ChatMessage[]>) => {
     if (!user?.email) return;
     try {
+      const token = localStorage.getItem('auth_token');
       await fetch('/api/user/data/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
-          email: user.email,
           type: 'chats',
           data: updatedChats
         })

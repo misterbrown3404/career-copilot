@@ -31,7 +31,7 @@ import { UserProfile } from '../types';
 import LoginView from './LoginView';
 
 interface LandingViewProps {
-  onLogin: (profile: UserProfile) => void;
+  onLogin: (profile: UserProfile, token?: string) => void;
   isLoggedIn: boolean;
   onNavigateToApp?: () => void;
   theme?: 'light' | 'dark';
@@ -860,8 +860,8 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
               {/* Login/Register Panel */}
               <LoginView 
                 isModal={true}
-                onLogin={(profile) => {
-                  onLogin(profile);
+                onLogin={(profile, token) => {
+                  onLogin(profile, token);
                   setShowAuthModal(false);
                 }} 
               />

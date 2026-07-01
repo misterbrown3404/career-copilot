@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
@@ -22,6 +23,13 @@ if (!supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey || '');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
+const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
+
+if (JWT_SECRET === 'change-me-in-production') {
+  console.warn('[BOOT] JWT_SECRET is using default fallback. Set a strong secret in environment variables.');
+}
 
 const PORT = 3000;
 const app = express();
@@ -85,6 +93,46 @@ app.get('/api/health', (req, res) => {
 });
 
 // ==========================================
+// AUTH HELPERS
+// ==========================================
+
+interface TokenPayload {
+  email: string;
+  role: string;
+}
+
+function getAuthToken(req: express.Request): string | undefined {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) return undefined;
+  return authHeader.slice(7);
+}
+
+function issueToken(payload: TokenPayload): string {
+  return jwt.sign(payload, JWT_SECRET as jwt.Secret, { expiresIn: JWT_EXPIRY });
+}
+
+function verifyAuthToken(token: string): TokenPayload | null {
+  try {
+    return jwt.verify(token, JWT_SECRET) as TokenPayload;
+  } catch {
+    return null;
+  }
+}
+
+const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const token = getAuthToken(req);
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+  const payload = verifyAuthToken(token);
+  if (!payload) {
+    return res.status(401).json({ error: 'Invalid or expired token.' });
+  }
+  (req as any).user = payload;
+  next();
+};
+
+// ==========================================
 // LIVE PERSISTENCE ENGINE (Supabase DB)
 // ==========================================
 
@@ -113,7 +161,7 @@ async function seedAdminUser() {
         verification_code: '000000',
         role: 'admin'
       });
-      console.log(`[SEED] Admin pre-seeded successfully with encrypted password`);
+      console.log(`[SEED] Admin pre-seeded successfully.`);
     } else {
       await supabase.from('users').update({ password: encryptedAdminPass, role: 'admin' }).eq('email', adminEmail);
       console.log(`[SEED] Admin credentials secured`);
@@ -144,7 +192,7 @@ if (isGeminiEnabled) {
     console.error('Failed to initialize Gemini SDK:', err);
   }
 } else {
-  console.log('Gemini API key is not set or using placeholder. Running with smart mock engines.');
+      console.log('Gemini API key is not set. Running with smart mock engines.');
 }
 
 // ==========================================
@@ -208,51 +256,10 @@ ${cvText}`;
       return res.json(parsed);
     } catch (err: any) {
       console.error('Gemini analyze-cv error:', err);
-      // Fallback on error to keep app functional
     }
   }
 
-  // --- SMART MOCK FALLBACK ---
-  // Simulate delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // Custom mock response based on user role to make it feel super tailored
-  const sampleMissingSkills = roleName.toLowerCase().includes('product')
-    ? ['SQL', 'A/B Testing', 'Product Roadmap', 'User Personas', 'Jira', 'Agile Delivery', 'Market Sizing']
-    : roleName.toLowerCase().includes('design')
-    ? ['Figma Components', 'Design Systems', 'Interactive Prototypes', 'User Testing', 'Typography', 'Heuristic Evaluation']
-    : ['Docker', 'Kubernetes', 'CI/CD Pipelines', 'GraphQL', 'Next.js', 'Redis', 'Unit/Integration Testing', 'Cypress'];
-
-  const mockResult = {
-    score: Math.floor(Math.random() * 15) + 70, // 70 to 85
-    strengths: [
-      `Well-defined outline detailing experience relative to ${roleName} standards.`,
-      'Excellent technical toolkit layout with easily readable sub-headings.',
-      'Quantifiable bullet points inserted in recent experience roles.'
-    ],
-    weaknesses: [
-      `Some descriptions of older roles are passive and read like task lists rather than strategic outcomes.`,
-      `Missing explicit keywords about architectural leadership and scale constraints.`,
-      `Does not detail workflow methodologies like test-driven development or agile cycle schedules.`
-    ],
-    skillsFound: ['JavaScript', 'TypeScript', 'React', 'HTML', 'CSS', 'Node.js', 'Express', 'Git', 'REST APIs'],
-    skillsMissing: sampleMissingSkills,
-    improvements: [
-      {
-        section: 'Recent Job Role Description',
-        before: 'Responsible for maintaining full stack features and working on various frontend updates.',
-        after: `Architected 12+ scalable React components and microservice endpoints, raising client dashboard retention by 18% and slicing server processing by 150ms.`,
-        reason: 'Transforms generic job descriptions into compelling, metric-driven accomplishments.'
-      },
-      {
-        section: 'Older Job Role Description',
-        before: 'Helped build our websites and fixed design issues on different viewports.',
-        after: `Delivered 5 high-traffic client responsive websites using CSS frameworks, boosting Google Lighthouse accessibility and SEO scores to a consistent 98%.`,
-        reason: 'Replaces generic helper verbs with professional achievements and direct, high-value metrics.'
-      }
-    ]
-  };
-  return res.json(mockResult);
+  return res.status(503).json({ error: 'AI analysis is temporarily unavailable. Please try again later.' });
 });
 
 // ==========================================
@@ -294,12 +301,7 @@ Return a JSON object with:
     }
   }
 
-  // --- SMART MOCK FALLBACK ---
-  await new Promise(resolve => setTimeout(resolve, 800));
-  return res.json({
-    optimized: `Spearheaded development of 4+ core application modules using modern libraries, reducing user page load latency by 28% and boosting weekly user engagement metrics.`,
-    reason: 'Adds an action-oriented start verb, quantifies your scope of work, and links actions to measurable business performance and latency improvements.'
-  });
+  return res.status(503).json({ error: 'AI bullet optimization is temporarily unavailable. Please try again later.' });
 });
 
 // ==========================================
@@ -348,23 +350,7 @@ Keep your answers professional yet warm, and conversational. Speak directly as $
     }
   }
 
-  // --- SMART MOCK FALLBACK ---
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  const userQuery = messages[messages.length - 1]?.text?.toLowerCase() || '';
-
-  let reply = `That is an excellent point. In my years of experience, the key to navigating this transition is focusing on high-leverage actions and structuring your approach. Let's draft a simple strategy around this tomorrow.`;
-
-  if (userQuery.includes('negotiat') || userQuery.includes('salary') || userQuery.includes('offer')) {
-    reply = `Negotiation is all about understanding your market value and building collaborative leverage. When Elena discusses packages, remember to thank them sincerely, reiterate your excitement, and ask: 'Based on my background, is there any flexibility in the base salary to match the market rate of $150,000?' Always let them speak first after you ask.`;
-  } else if (userQuery.includes('resume') || userQuery.includes('cv') || userQuery.includes('project')) {
-    reply = `Your resume needs to showcase outcomes, not chores. Instead of writing 'worked on React pages', frame it as 'Optimized React rendering cycles, saving 300ms in dashboard rendering'. Let's pick 2 main projects in your profile and rewrite them with this metrics-first mindset.`;
-  } else if (userQuery.includes('interview') || userQuery.includes('question') || userQuery.includes('prep')) {
-    reply = `For technical or behavioral interviews, the secret is structure. I highly recommend using the STAR method (Situation, Task, Action, Result). Make sure your 'Result' is quantified—numbers are highly memorable for hiring managers. Let's do a practice behavioral question right now!`;
-  } else if (userQuery.includes('hello') || userQuery.includes('hi')) {
-    reply = `Hello! It is great to connect with you. I am fully excited to look over your goals, review your resume structure, or practice tough system questions with you. What specific milestone are you aiming to crush this week?`;
-  }
-
-  return res.json({ text: reply });
+  return res.status(503).json({ error: 'AI mentor is temporarily unavailable. Please try again later.' });
 });
 
 // ==========================================
@@ -437,71 +423,7 @@ Ensure the roadmap nodes flow sequentially from foundation to advanced.`;
     }
   }
 
-  // --- SMART MOCK FALLBACK ---
-  await new Promise(resolve => setTimeout(resolve, 1200));
-  const mockRoadmap = [
-    {
-      id: 'node-1',
-      title: `${roleName} Core Competency Foundations`,
-      description: `Deepen your command of foundational patterns, state managers, custom utility rendering structures, and client-side efficiency concepts tailored for ${roleName}.`,
-      duration: '1-2 weeks',
-      status: 'unlocked',
-      resources: [
-        { name: 'Official Competency Guidelines', url: 'https://developer.mozilla.org/' },
-        { name: 'Core Architecture Walkthrough', url: 'https://react.dev/' }
-      ],
-      project: {
-        title: 'Modular Design Ledger',
-        description: 'Build a fully responsive workspace module incorporating custom visual queues, keyboard-friendly toggles, and rich layout state configurations.'
-      }
-    },
-    {
-      id: 'node-2',
-      title: `SaaS & ${industryName} API Engineering`,
-      description: `Implement secure, high-throughput microservices, middleware routing systems, CORS constraints, rate limits, and optimized datastore integrations.`,
-      duration: '2 weeks',
-      status: 'locked',
-      resources: [
-        { name: 'Robust Node API Best Practices', url: 'https://expressjs.com/' },
-        { name: 'API Security Standards (OWASP)', url: 'https://owasp.org/' }
-      ],
-      project: {
-        title: 'Rate-Limited Token Authenticator',
-        description: 'Create a standalone node service that securely signs, validates, and rotates tokens under a strict rate limit of 10 requests per minute.'
-      }
-    },
-    {
-      id: 'node-3',
-      title: 'Scalable Database & Caching Architectures',
-      description: 'Master advanced SQL/NoSQL indexing structures, read/write replications, multi-stage database joins, and speed optimizations using Redis.',
-      duration: '2-3 weeks',
-      status: 'locked',
-      resources: [
-        { name: 'PostgreSQL Database Indexing Optimization', url: 'https://www.postgresql.org/' },
-        { name: 'Caching Architecture Guides', url: 'https://redis.io/' }
-      ],
-      project: {
-        title: 'Real-time Activity Caching layer',
-        description: 'Build a server dashboard proxy that captures database responses and caches results inside a local cache, improving read API speeds by 80%.'
-      }
-    },
-    {
-      id: 'node-4',
-      title: 'Continuous Deployment & Cloud Infrastructure',
-      description: 'Deploy application services securely on container platforms like Cloud Run, manage custom domains, integrate CI/CD workflows, and monitor active errors.',
-      duration: '1 week',
-      status: 'locked',
-      resources: [
-        { name: 'Automated Workflows via GitHub Actions', url: 'https://github.com/features/actions' },
-        { name: 'Container Operations and Docker Guide', url: 'https://www.docker.com/' }
-      ],
-      project: {
-        title: 'Automated Container Ingress Pipeline',
-        description: 'Draft a fully functional YAML flow compiling build packages, verifying syntax, checking types, and triggering a secure deployment hook.'
-      }
-    }
-  ];
-  return res.json(mockRoadmap);
+  return res.status(503).json({ error: 'AI roadmap generation is temporarily unavailable. Please try again later.' });
 });
 
 // ==========================================
@@ -574,47 +496,7 @@ Return a JSON array of exactly 3 strings representing the questions. Ensure the 
     }
   }
 
-  // --- SMART MOCK FALLBACK ---
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  if (lastAnswer !== undefined) {
-    // Generate feedback based on how long/rich their answer was
-    const answerLen = (lastAnswer || '').trim().length;
-    let score = 55;
-    let feedback = `Your response has a reasonable structure but lacks depth. Try to use the STAR method: describe a specific Situation, outline the Task and Actions you performed, and end with the exact numeric Result of your contribution.`;
-
-    if (answerLen > 120) {
-      score = 88;
-      feedback = `Excellent and highly structured response! You clearly defined your engineering ownership, detailed the specific actions you took (like profiling and caching), and concluded with a solid, positive impact. This shows deep technical accountability.`;
-    } else if (answerLen > 50) {
-      score = 75;
-      feedback = `Good baseline response. You answered the core question, but it could be much stronger. Try to specify *which* tools you used (e.g., specific React state handlers, database queries) and mention a quantitative metric to prove your impact.`;
-    }
-
-    return res.json({ score, feedback });
-  } else {
-    // Return sample tailored questions
-    const mockQuestionsMap: Record<string, string[]> = {
-      Technical: [
-        `Can you explain how React's virtual DOM reconciliation works, and how you would prevent unnecessary sub-component re-renders in a complex state layout?`,
-        `How do you handle database connection pooling in a Node/Express application, and what strategy do you use for caching frequent, slow queries?`,
-        `Describe a scenario where you faced a race condition in web services or state management. How did you diagnose and permanently resolve it?`
-      ],
-      Behavioral: [
-        `Describe a time when you had a strong technical disagreement with a team member or product manager. How did you reach a consensus?`,
-        `Tell me about a high-pressure production bug or outage. What steps did you take to triage it, and what post-mortem improvements did you implement?`,
-        `Describe a project you delivered where you had to manage significant technical debt. How did you balance shipping the feature with refactoring?`
-      ],
-      General: [
-        `What is your approach to learning a completely new language, framework, or cloud service under a tight project deadline?`,
-        `Why do you want to join a developer-centric company like Stripe/Vercel, and how do you evaluate what makes a great developer workflow?`,
-        `Where do you see your engineering focus evolving over the next 2-3 years, and what specific steps are you taking to achieve that seniority?`
-      ]
-    };
-
-    const qs = mockQuestionsMap[type] || mockQuestionsMap['General'];
-    return res.json({ questions: qs });
-  }
+  return res.status(503).json({ error: 'AI interview coaching is temporarily unavailable. Please try again later.' });
 });
 
 // ==========================================
@@ -659,99 +541,24 @@ Structure it beautifully. Return a JSON object with:
     }
   }
 
-  // --- SMART MOCK FALLBACK ---
-  await new Promise(resolve => setTimeout(resolve, 1100));
-  const coverLetter = `Dear Hiring Team at ${company},
-
-I am writing to express my enthusiastic interest in the ${role} position. With my background in building high-performance web systems and creating seamless digital products, I am confident in my ability to bring immediately valuable engineering contributions to your team.
-
-Throughout my career, I have focused on optimizing component lifecycles, constructing robust database schemas, and accelerating API services. I admire ${company}'s commitment to engineering excellence, and I would love to apply my technical curiosity to help solve your unique scalability challenges.
-
-Thank you for your time and consideration. I look forward to discussing how my experience fits the ${role} opening.
-
-Sincerely,
-Alex Rivera`;
-
-  return res.json({
-    coverLetter,
-    matchScore: Math.floor(Math.random() * 15) + 80 // 80 to 95
-  });
+  return res.status(503).json({ error: 'AI application tailoring is temporarily unavailable. Please try again later.' });
 });
 
 // ==========================================
 // API ROUTE: RapidAPI Job Search Integration
 // ==========================================
 function enrichSearchResults(results: any[], q: string, loc: string, cntry: string, comp: string, prov: string) {
-  const targetCount = 6;
-  if (results.length >= targetCount) {
-    return results;
-  }
-
-  const generatedCount = targetCount - results.length;
-  const simulatedJobs = [];
-
-  const genericRoles = [
-    `Senior ${q}`,
-    `Lead ${q} Architect`,
-    `${q} Systems Engineer`,
-    `Staff ${q} Specialist`,
-    `Associate ${q} Developer`,
-    `VP of Engineering - ${q}`
-  ];
-
-  const genericCompanies = [
-    'Stripe',
-    'OpenAI',
-    'Google',
-    'Airbnb',
-    'Netflix',
-    'Slack',
-    'Figma'
-  ];
-
-  const genericSalaries = [
-    '$130,000 - $160,000 / year',
-    '$145,000 - $185,000 / year',
-    '$165,000 - $210,000 / year',
-    '$120,000 - $145,000 / year',
-    '$180,000 - $240,000 / year',
-    '$220,000 - $280,000 / year'
-  ];
-
-  const genericDescriptions = [
-    `Join our high-performing team to scale products using modern methodologies. You'll build resilient systems, refactor layout states, and spearhead robust APIs.`,
-    `Architect key subsystems and components, optimizing query load latency. Participate in software development cycles, contributing to high-contrast UI assets.`,
-    `Collaborate with stakeholders to deliver highly available features. Maintain clean, well-tested codebases and automate continuous deployment.`,
-    `Lead engineering standards and mentor junior developers. Improve responsive structures and establish modular guidelines across platforms.`,
-    `Design interactive user experiences and build clean component libraries. Refine web layouts and implement responsive styles in a fast-paced environment.`,
-    `Direct strategic engineering roadmaps and oversee core system deployments. Shape technical choices and secure cloud database proxies.`
-  ];
-
-  for (let i = 0; i < generatedCount; i++) {
-    const companyName = i === 0 && comp ? comp : (comp && i > 0 ? `${comp} (Affiliated/Partner)` : genericCompanies[i % genericCompanies.length]);
-    const jobRole = genericRoles[i % genericRoles.length];
-    const salaryVal = genericSalaries[i % genericSalaries.length];
-    const descVal = genericDescriptions[i % genericDescriptions.length];
-
-    simulatedJobs.push({
-      id: `sim-${prov}-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
-      company: companyName,
-      role: jobRole,
-      salary: salaryVal,
-      location: loc || 'Remote',
-      link: `https://google.com/search?q=${encodeURIComponent(jobRole + ' jobs at ' + companyName)}`,
-      notes: descVal,
-      matchScore: Math.floor(Math.random() * 12) + 85,
-      isSimulated: true
-    });
-  }
-
-  return [...results, ...simulatedJobs];
+  return results;
 }
 
 app.get('/api/jobs/search', async (req, res) => {
   const { provider, query, location, country, company } = req.query;
-  const apiKey = process.env.RAPIDAPI_KEY || '76cc4571d2mshbee2020a7aeb22cp15a348jsn73af9a041d04';
+  const apiKey = process.env.RAPIDAPI_KEY;
+
+  if (!apiKey) {
+    console.error('[JOBS] Missing RAPIDAPI_KEY environment variable');
+    return res.status(500).json({ error: 'Job search service is not configured.' });
+  }
 
   const prov = String(provider || 'jsearch').toLowerCase();
   const q = String(query || 'developer');
@@ -938,7 +745,7 @@ await supabase.from('users').insert({
       console.error('[AUTH] Email send error:', emailErr);
     }
 
-    console.log(`[AUTH] Registered ${email} with encrypted password. OTP: ${code}`);
+    console.log(`[AUTH] Registered ${email} with encrypted password.`);
 
     res.json({
       success: true,
@@ -973,8 +780,10 @@ app.post('/api/auth/verify-email', async (req, res) => {
 
     console.log(`[AUTH] Verified email for ${email}`);
 
+    const tokenPayload = { email: user.email, role: user.role || 'user' };
     res.json({
       success: true,
+      token: issueToken(tokenPayload),
       user: {
         name: user.name,
         email: user.email,
@@ -1005,18 +814,21 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const encryptedPasswordInput = hashPassword(password);
+    const isHashMatch = user.password === encryptedPasswordInput;
+    const isPlaintextMatch = user.password === password && user.password.length !== 64;
 
-    if (user.password !== encryptedPasswordInput && user.password !== password) {
+    if (!isHashMatch && !isPlaintextMatch) {
       return res.status(400).json({ error: 'Invalid email or password.' });
     }
 
-    if (user.password === password && password.length !== 64) {
+    if (isPlaintextMatch) {
       await supabase.from('users').update({ password: encryptedPasswordInput }).eq('email', email.trim());
-      console.log(`[AUTH] Seamlessly secured login credentials to SHA-256 for user: ${email}`);
     }
 
+    const tokenPayload = { email: user.email, role: user.role || 'user' };
     res.json({
       success: true,
+      token: issueToken(tokenPayload),
       emailVerified: user.email_verified,
       user: {
         name: user.name,
@@ -1063,7 +875,7 @@ app.post('/api/auth/resend-code', async (req, res) => {
       console.error('[AUTH] Email send error:', emailErr);
     }
 
-    console.log(`[AUTH] Resent code to ${email}. Verification Code: ${code}`);
+    console.log(`[AUTH] Resent code to ${email}.`);
 
     res.json({
       success: true,
@@ -1132,19 +944,16 @@ app.post('/api/admin/send-newsletter', (req, res) => {
 });
 
 // Load full live user data
-app.get('/api/user/data', async (req, res) => {
-  const email = String(req.query.email || '').trim().toLowerCase();
-  if (!email) {
-    return res.status(400).json({ error: 'Email query parameter is required.' });
-  }
+app.get('/api/user/data', authMiddleware, async (req, res) => {
+  const userEmail = (req as any).user.email;
 
   try {
     const [usersRes, appsRes, resumesRes, roadmapsRes, chatsRes] = await Promise.all([
-      supabase.from('users').select('name, email, target_role, target_industry, experience_level, resume_score, email_verified').eq('email', email).single(),
-      supabase.from('applications').select('data').eq('email', email).single(),
-      supabase.from('resumes').select('data').eq('email', email).single(),
-      supabase.from('roadmaps').select('data').eq('email', email).single(),
-      supabase.from('chats').select('data').eq('email', email).single()
+      supabase.from('users').select('name, email, target_role, target_industry, experience_level, resume_score, email_verified').eq('email', userEmail).single(),
+      supabase.from('applications').select('data').eq('email', userEmail).single(),
+      supabase.from('resumes').select('data').eq('email', userEmail).single(),
+      supabase.from('roadmaps').select('data').eq('email', userEmail).single(),
+      supabase.from('chats').select('data').eq('email', userEmail).single()
     ]);
 
     if (!usersRes.data) {
@@ -1173,10 +982,11 @@ app.get('/api/user/data', async (req, res) => {
 });
 
 // Save specific live user data section
-app.post('/api/user/data/save', async (req, res) => {
-  const { email, type, data } = req.body;
-  if (!email || !type) {
-    return res.status(400).json({ error: 'Email and data type are required.' });
+app.post('/api/user/data/save', authMiddleware, async (req, res) => {
+  const userEmail = (req as any).user.email;
+  const { type, data } = req.body;
+  if (!type) {
+    return res.status(400).json({ error: 'Data type is required.' });
   }
 
   try {
@@ -1187,15 +997,15 @@ app.post('/api/user/data/save', async (req, res) => {
         target_industry: data.targetIndustry,
         experience_level: data.experienceLevel,
         resume_score: data.resumeScore
-      }).eq('email', email.trim());
+      }).eq('email', userEmail.trim());
     } else if (type === 'applications') {
-      await supabase.from('applications').upsert({ email: email.trim(), data });
+      await supabase.from('applications').upsert({ email: userEmail.trim(), data });
     } else if (type === 'resume') {
-      await supabase.from('resumes').upsert({ email: email.trim(), data });
+      await supabase.from('resumes').upsert({ email: userEmail.trim(), data });
     } else if (type === 'roadmap') {
-      await supabase.from('roadmaps').upsert({ email: email.trim(), data });
+      await supabase.from('roadmaps').upsert({ email: userEmail.trim(), data });
     } else if (type === 'chats') {
-      await supabase.from('chats').upsert({ email: email.trim(), data });
+      await supabase.from('chats').upsert({ email: userEmail.trim(), data });
     } else {
       return res.status(400).json({ error: 'Invalid data type.' });
     }
