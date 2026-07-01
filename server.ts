@@ -1211,6 +1211,11 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[EXPRESS] Unhandled error:', err);
+  res.status(err.status || 500).json({ error: 'Internal Server Error' });
+});
+
 // ==========================================
 // EXPORT FOR VERCEL SERVERLESS
 // ==========================================
