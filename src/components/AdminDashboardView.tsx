@@ -187,13 +187,13 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
     return {
       welcome: {
         name: '🚀 System Welcome & Launch Campaign',
-        subject: '🚀 Welcome to Aura Copilot: Your Ultimate AI Career Flightdeck!',
-        body: `Hello Aura Pioneer,\n\nWe are absolutely thrilled to welcome you to Aura Copilot, the futuristic AI Career Accelerator!\n\nHere is a list of the premium AI modules unlocked on your dashboard:\n1. 🌟 Welcome Portal - Explore personalized career telemetry and job market analytics.\n2. 📁 Resume Lab & Upload - Parse your CV instantly, see your match score, and rewrite bullets live.\n3. 🔍 Job Search Tracker - Hunt jobs with high fidelity filters, track applications, and compile cover letters.\n4. 💬 AI Interview Coach - Participate in fully realistic role-play feedback loops powered by Gemini.\n5. 🗺️ Learning Roadmaps - Generate structured career milestone roadmaps to achieve technical superiority.\n\nLog in now to launch your career: http://localhost:3000\n\nTo your continuous elevation,\nThe Aura Copilot Engineering Team`
+        subject: '🚀 Welcome to AURA AI: Your Ultimate AI Career Flightdeck!',
+        body: `Hello Aura Pioneer,\n\nWe are absolutely thrilled to welcome you to AURA AI, the futuristic AI Career Accelerator!\n\nHere is a list of the premium AI modules unlocked on your dashboard:\n1. 🌟 Welcome Portal - Explore personalized career telemetry and job market analytics.\n2. 📁 Resume Lab & Upload - Parse your CV instantly, see your match score, and rewrite bullets live.\n3. 🔍 Job Search Tracker - Hunt jobs with high fidelity filters, track applications, and compile cover letters.\n4. 💬 AI Interview Coach - Participate in fully realistic role-play feedback loops powered by Gemini.\n5. 🗺️ Learning Roadmaps - Generate structured career milestone roadmaps to achieve technical superiority.\n\nLog in now to launch your career: http://localhost:3000\n\nTo your continuous elevation,\nThe AURA AI Engineering Team`
       },
       premium: {
         name: '💎 VIP Premium 50% Liftoff Offer',
         subject: '💎 VIP Invitation: Secure 50% Off Lifetime Premium Access!',
-        body: `Hello Outstanding Professional,\n\nAs part of our exclusive Aura Copilot launch cohort, we are inviting you to upgrade to the VIP Premium Flight Plan at a massive 50% discount!\n\nPremium Unlocks:\n- Unlimited Gemini-3.5-Pro CV critiques and personalized roadmap expansions.\n- Unrestricted mock interview role-play simulations with elite industrial categories.\n- Direct access to high-fidelity job search aggregator indexes.\n\nUse Code: AURAVIP50 on your setting tab to secure this exclusive discount today!\n\nElevate your career trajectory now: http://localhost:3000\n\nWarm regards,\nThe Aura Operations Board`
+        body: `Hello Outstanding Professional,\n\nAs part of our exclusive AURA AI launch cohort, we are inviting you to upgrade to the VIP Premium Flight Plan at a massive 50% discount!\n\nPremium Unlocks:\n- Unlimited Gemini-3.5-Pro CV critiques and personalized roadmap expansions.\n- Unrestricted mock interview role-play simulations with elite industrial categories.\n- Direct access to high-fidelity job search aggregator indexes.\n\nUse Code: AURAVIP50 on your setting tab to secure this exclusive discount today!\n\nElevate your career trajectory now: http://localhost:3000\n\nWarm regards,\nThe AURA AI Operations Board`
       },
       digest: {
         name: '🎯 Monthly Career Advancement Digest',
@@ -1404,7 +1404,7 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
                     <input
                       type="text"
                       required
-                      placeholder="e.g. 🚀 Welcome to Aura Copilot..."
+                       placeholder="e.g. 🚀 Welcome to AURA AI..."
                       value={campaignSubject}
                       onChange={(e) => setCampaignSubject(e.target.value)}
                       className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none focus:ring-1 focus:ring-green-400 font-semibold ${

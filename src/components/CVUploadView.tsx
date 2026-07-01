@@ -558,7 +558,7 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
           <div className="bg-neutral-900 rounded-lg p-6 sm:p-8 w-full max-w-sm text-center border border-neutral-800 space-y-4">
             <Loader2 className="w-10 h-10 text-green-400 animate-spin mx-auto" />
             <div>
-              <h3 className="font-display font-bold text-white uppercase tracking-wider text-sm">Running Career Copilot AI</h3>
+              <h3 className="font-display font-bold text-white uppercase tracking-wider text-sm">Running AURA AI</h3>
               <p className="text-neutral-400 text-xs mt-1 transition-all duration-300 min-h-[32px] flex items-center justify-center font-mono">
                 {loadingMessage}
               </p>

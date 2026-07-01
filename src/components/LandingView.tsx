@@ -29,6 +29,9 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '../types';
 import LoginView from './LoginView';
+import resumeAnalysisImg from '../assets/images/resume_analysis_mockup_1782384475324.jpg';
+import careerHeroImg from '../assets/images/career_hero_1782337380368.jpg';
+import interviewCoachImg from '../assets/images/interview_coach_mockup_1782384458541.jpg';
 
 interface LandingViewProps {
   onLogin: (profile: UserProfile, token?: string) => void;
@@ -64,7 +67,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
       accent: "text-indigo-400",
       stats: "Average score boost: +24%",
       detail: "Leverages deep semantic parses to optimize ATS compatibility and phrasing.",
-      image: "/src/assets/images/resume_analysis_mockup_1782384475324.jpg"
+      image: resumeAnalysisImg
     },
     {
       title: "The Resume Lab",
@@ -74,7 +77,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
       accent: "text-pink-400",
       stats: "Resumes Built: 12,500+",
       detail: "Direct C-suite vocabulary injections and system print controls to secure your layout.",
-      image: "/src/assets/images/career_hero_1782337380368.jpg"
+      image: careerHeroImg
     },
     {
       title: "Audio-Interactive Coach",
@@ -84,7 +87,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
       accent: "text-cyan-400",
       stats: "Confidence multiplier: 2.8x",
       detail: "Immediate feedback on posture, phrasing structure, and technical gaps.",
-      image: "/src/assets/images/interview_coach_mockup_1782384458541.jpg"
+      image: interviewCoachImg
     }
   ];
 
@@ -215,10 +218,10 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
             </div>
             <div>
               <h1 className={`font-display font-black text-lg tracking-tight uppercase leading-none ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-                Career Copilot
+                 AURA AI
               </h1>
               <span className={`text-[9px] font-mono uppercase tracking-widest font-extrabold ${isLight ? 'text-indigo-600' : 'text-green-400'}`}>
-                The AI Job Copilot
+                The AURA AI Job Copilot
               </span>
             </div>
           </div>
@@ -318,7 +321,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
               isLight ? 'text-neutral-600' : 'text-neutral-400'
             }`}
           >
-            Career Copilot is a curated, full-stack predictive career sandbox. Redesign your CV, orchestrate interactive voice-coached mock interviews, track live aggregates, and chat directly with specialized career mentors.
+            AURA AI is a curated, full-stack predictive career sandbox. Redesign your CV, orchestrate interactive voice-coached mock interviews, track live aggregates, and chat directly with specialized career mentors.
           </motion.p>
 
           <motion.div
@@ -407,7 +410,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
               isLight ? 'border-neutral-200' : 'border-neutral-800'
             }`}>
               <img 
-                src="/src/assets/images/career_hero_1782337380368.jpg" 
+                src={careerHeroImg} 
                 alt="Futuristic Escapist Career Guidance" 
                 className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
                 referrerPolicy="no-referrer"
@@ -425,7 +428,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
                   <span>Interactive System Preview</span>
                 </div>
                 <h4 className={`font-display font-black text-xs uppercase tracking-wider ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-                  Your Personal Career Copilot
+                  Your Personal AURA AI
                 </h4>
                 <p className={`text-[10px] leading-normal ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
                   Traces robust development routes across complex technical domain spheres automatically.
@@ -714,7 +717,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
           <p className={`text-sm sm:text-base leading-relaxed max-w-xl mx-auto ${
             isLight ? 'text-neutral-600' : 'text-neutral-450'
           }`}>
-            The traditional resume submission funnel is broken. High-growth environments filter for advanced contextual clarity and dynamic engineering poise. Career Copilot prepares you precisely for the high-end nexus of the market.
+            The traditional resume submission funnel is broken. High-growth environments filter for advanced contextual clarity and dynamic engineering poise. AURA AI prepares you precisely for the high-end nexus of the market.
           </p>
 
           <div className="pt-4">
@@ -832,14 +835,14 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
       {/* Authentication Slide-In modal */}
       <AnimatePresence>
         {showAuthModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto">
             {/* Overlay backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowAuthModal(false)}
-              className="absolute inset-0 bg-neutral-950/80 backdrop-blur-md"
+              className="fixed inset-0 bg-neutral-950/80 backdrop-blur-md"
             />
 
             {/* Modal container content */}
@@ -847,7 +850,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg z-10 animate-fadeIn"
+              className="relative w-full max-w-lg z-10 animate-fadeIn my-4"
             >
               {/* Dismiss button */}
               <button

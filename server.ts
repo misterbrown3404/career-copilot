@@ -754,9 +754,9 @@ await supabase.from('users').insert({
 
     try {
       await resend.emails.send({
-        from: 'Career Copilot <onboarding@resend.dev>',
+        from: 'AURA AI <onboarding@resend.dev>',
         to: email.trim(),
-        subject: 'Your Career Copilot Verification Code',
+        subject: 'Your AURA AI Verification Code',
         html: `<p>Your verification code is: <strong>${code}</strong></p>`
       });
       console.log(`[AUTH] Verification email sent to ${email}`);
@@ -884,9 +884,9 @@ app.post('/api/auth/resend-code', authLimiter, async (req, res) => {
 
     try {
       await resend.emails.send({
-        from: 'Career Copilot <onboarding@resend.dev>',
+        from: 'AURA AI <onboarding@resend.dev>',
         to: email.trim(),
-        subject: 'Your New Career Copilot Verification Code',
+        subject: 'Your New AURA AI Verification Code',
         html: `<p>Your new verification code is: <strong>${code}</strong></p>`
       });
       console.log(`[AUTH] Verification email sent to ${email}`);
@@ -904,6 +904,76 @@ app.post('/api/auth/resend-code', authLimiter, async (req, res) => {
   } catch (err) {
     console.error('[AUTH] Resend code error:', err);
     res.status(500).json({ error: 'Failed to resend code.' });
+  }
+});
+
+// Forgot password - send reset code
+app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required.' });
+  }
+
+  try {
+    const { data: existingUser } = await supabase.from('users').select('email').eq('email', email.trim()).single();
+    if (!existingUser) {
+      return res.status(404).json({ error: 'No account found with this email.' });
+    }
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    await supabase.from('users').update({ verification_code: resetCode }).eq('email', email.trim());
+
+    try {
+      await resend.emails.send({
+        from: 'AURA AI <onboarding@resend.dev>',
+        to: email.trim(),
+        subject: 'Your AURA AI Password Reset Code',
+        html: `<p>Your password reset code is: <strong>${resetCode}</strong></p>`
+      });
+      console.log(`[AUTH] Password reset code sent to ${email}`);
+    } catch (emailErr) {
+      console.error('[AUTH] Password reset email error:', emailErr);
+    }
+
+    res.json({
+      success: true,
+      message: 'Password reset code sent to your email.'
+    });
+  } catch (err) {
+    console.error('[AUTH] Forgot password error:', err);
+    res.status(500).json({ error: 'Failed to process password reset.' });
+  }
+});
+
+// Reset password with code
+app.post('/api/auth/reset-password', authLimiter, async (req, res) => {
+  const { email, code, newPassword } = req.body;
+  if (!email || !code || !newPassword) {
+    return res.status(400).json({ error: 'Email, reset code, and new password are required.' });
+  }
+
+  try {
+    const { data: user } = await supabase.from('users').select('*').eq('email', email.trim()).single();
+    if (!user) {
+      return res.status(404).json({ error: 'Account not found.' });
+    }
+
+    if (user.verification_code !== code.trim()) {
+      return res.status(400).json({ error: 'Invalid reset code.' });
+    }
+
+    const encryptedPassword = hashPassword(newPassword);
+    await supabase.from('users').update({ password: encryptedPassword }).eq('email', email.trim());
+
+    console.log(`[AUTH] Password reset successful for ${email}`);
+
+    res.json({
+      success: true,
+      message: 'Password has been reset successfully. You can now log in.'
+    });
+  } catch (err) {
+    console.error('[AUTH] Reset password error:', err);
+    res.status(500).json({ error: 'Failed to reset password.' });
   }
 });
 
@@ -1102,6 +1172,6 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Express Career Copilot server running at http://0.0.0.0:${PORT}`);
+    console.log(`Express AURA AI server running at http://0.0.0.0:${PORT}`);
   });
 }
