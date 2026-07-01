@@ -9,11 +9,11 @@ import { Resend } from 'resend';
 
 dotenv.config();
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://avvrdkuwgxqyrmaycqlr.supabase.co';
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || process.env['career_copilot_SUPABASE_URL'] || 'https://avvrdkuwgxqyrmaycqlr.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || process.env['career_copilot_SUPABASE_SECRET_KEY'];
 
 if (!supabaseKey) {
-  console.error('[BOOT] Missing SUPABASE_KEY. Set it in Vercel project environment variables or .env for local development.');
+  console.error('[BOOT] Missing SUPABASE_KEY / career_copilot_SUPABASE_SECRET_KEY. Set it in Vercel project environment variables or .env for local development.');
   if (process.env.VERCEL === '1') {
     throw new Error('FATAL: SUPABASE_KEY is required to start the server.');
   }
