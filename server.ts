@@ -9,10 +9,17 @@ import { Resend } from 'resend';
 
 dotenv.config();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://avvrdkuwgxqyrmaycqlr.supabase.co',
-  process.env.SUPABASE_KEY || ''
-);
+const supabaseUrl = process.env.SUPABASE_URL || 'https://avvrdkuwgxqyrmaycqlr.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY;
+
+if (!supabaseKey) {
+  console.error('[BOOT] Missing SUPABASE_KEY. Set it in Vercel project environment variables or .env for local development.');
+  if (process.env.VERCEL === '1') {
+    throw new Error('FATAL: SUPABASE_KEY is required to start the server.');
+  }
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey || '');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
