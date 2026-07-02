@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Key, Loader2, ShieldAlert, Sparkles, ArrowLeft } from 'lucide-react';
+import { useToast } from './Toast';
 
 interface ResetPasswordViewProps {
   email?: string;
@@ -9,6 +10,7 @@ interface ResetPasswordViewProps {
 }
 
 export default function ResetPasswordView({ email: initialEmail, onBack, theme = 'dark' }: ResetPasswordViewProps) {
+  const toast = useToast();
   const isLight = theme === 'light';
   const [email, setEmail] = useState(initialEmail || '');
   const [code, setCode] = useState('');
@@ -35,10 +37,10 @@ export default function ResetPasswordView({ email: initialEmail, onBack, theme =
         throw new Error(data.error || 'Failed to reset password.');
       }
 
-      setSuccess('Password reset successful! You can now sign in.');
+      toast.showToast('Password reset successful! You can now sign in.', 'success');
       setTimeout(() => {
         if (onBack) onBack();
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       setError(err.message || 'Error resetting password.');
     } finally {

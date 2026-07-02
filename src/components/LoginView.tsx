@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LogIn, UserPlus, Key, Mail, User, Briefcase, ShieldAlert, Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 import { UserProfile } from '../types';
+import { useToast } from './Toast';
 
 interface LoginViewProps {
   onLogin: (profile: UserProfile, token?: string) => void;
@@ -10,6 +11,7 @@ interface LoginViewProps {
 }
 
 export default function LoginView({ onLogin, isModal = false, onForgotPassword }: LoginViewProps) {
+  const toast = useToast();
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -55,7 +57,7 @@ export default function LoginView({ onLogin, isModal = false, onForgotPassword }
 
         setVerificationEmail(email);
         setIsVerifying(true);
-        setSuccess('Account created! Please enter the 6-digit code to verify your email.');
+        toast.showToast('Account created! Verification email sent.', 'success');
       } else {
         // Sign in
         const response = await fetch('/api/auth/login', {
@@ -145,6 +147,7 @@ export default function LoginView({ onLogin, isModal = false, onForgotPassword }
       }
 
       setSuccess('A new 6-digit verification code has been generated.');
+      toast.showToast('Verification code resent to your email.', 'success');
     } catch (err: any) {
       setError(err.message || 'Error resending code.');
     } finally {

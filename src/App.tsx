@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Menu, Briefcase, Sun, Moon } from 'lucide-react';
 import { UserProfile, JobApplication, ResumeDetails } from './types';
 
+// Components
+import { ToastProvider } from './components/Toast';
+
 // Views
 import LandingView from './components/LandingView';
 import LoginView from './components/LoginView';
@@ -46,6 +49,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password'>('login');
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   // Core synchronized application state
   const [user, setUser] = useState<UserProfile>(emptyUserProfile);
@@ -101,6 +105,7 @@ export default function App() {
   useEffect(() => {
     if (isLoggedIn && user?.email) {
       const fetchUserData = async () => {
+        setIsLoadingData(true);
         try {
           const res = await fetch('/api/user/data', {
             headers: {
@@ -135,6 +140,8 @@ export default function App() {
           }
         } catch (err) {
           console.error('Failed to load live data:', err);
+        } finally {
+          setIsLoadingData(false);
         }
       };
       fetchUserData();
@@ -262,24 +269,35 @@ export default function App() {
 
   if (!isLoggedIn) {
     if (authView === 'forgot-password') {
-      return <ForgotPasswordView onBack={() => setAuthView('login')} theme={theme} />;
+      return (
+        <ToastProvider>
+          <ForgotPasswordView onBack={() => setAuthView('login')} theme={theme} />
+        </ToastProvider>
+      );
     }
     if (authView === 'reset-password') {
-      return <ResetPasswordView onBack={() => setAuthView('login')} theme={theme} />;
+      return (
+        <ToastProvider>
+          <ResetPasswordView onBack={() => setAuthView('login')} theme={theme} />
+        </ToastProvider>
+      );
     }
     return (
-      <LandingView 
-        onLogin={handleLogin} 
-        isLoggedIn={false} 
-        theme={theme}
-        toggleTheme={toggleTheme}
-        onShowForgotPassword={() => setAuthView('forgot-password')}
-        onShowResetPassword={() => setAuthView('reset-password')}
-      />
+      <ToastProvider>
+        <LandingView 
+          onLogin={handleLogin} 
+          isLoggedIn={false} 
+          theme={theme}
+          toggleTheme={toggleTheme}
+          onShowForgotPassword={() => setAuthView('forgot-password')}
+          onShowResetPassword={() => setAuthView('reset-password')}
+        />
+      </ToastProvider>
     );
   }
 
   return (
+    <ToastProvider>
     <div className={`flex flex-col lg:flex-row h-screen w-full overflow-hidden font-sans antialiased transition-colors duration-300 ${
       theme === 'light' ? 'bg-neutral-50 text-neutral-800' : 'bg-neutral-950 text-neutral-200'
     }`}>
@@ -347,14 +365,27 @@ export default function App() {
         {/* View stage wrapper */}
         <main className="flex-1 overflow-y-auto px-4 py-6 sm:p-8" role="main">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="h-full max-w-7xl mx-auto"
-            >
+            {isLoadingData ? (
+              <motion.div
+                key="skeleton"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full max-w-7xl mx-auto space-y-6"
+              >
+                <div className={`h-8 w-48 rounded-lg animate-pulse ${theme === 'light' ? 'bg-neutral-200' : 'bg-neutral-800'}`} />
+                <div className={`h-64 w-full rounded-2xl animate-pulse ${theme === 'light' ? 'bg-neutral-200' : 'bg-neutral-800'}`} />
+                <div className={`h-64 w-full rounded-2xl animate-pulse ${theme === 'light' ? 'bg-neutral-200' : 'bg-neutral-800'}`} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                className="h-full max-w-7xl mx-auto"
+              >
               {activeTab === 'landing' && (
                 <LandingView 
                   onLogin={handleLogin} 
@@ -428,9 +459,11 @@ export default function App() {
                 />
               )}
             </motion.div>
+            )}
           </AnimatePresence>
         </main>
       </div>
     </div>
+    </ToastProvider>
   );
 }

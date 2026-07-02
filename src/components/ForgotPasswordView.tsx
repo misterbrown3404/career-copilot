@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Loader2, ShieldAlert, Sparkles, ArrowLeft } from 'lucide-react';
+import { useToast } from './Toast';
 
 interface ForgotPasswordViewProps {
   onBack?: () => void;
@@ -8,6 +9,7 @@ interface ForgotPasswordViewProps {
 }
 
 export default function ForgotPasswordView({ onBack, theme = 'dark' }: ForgotPasswordViewProps) {
+  const toast = useToast();
   const isLight = theme === 'light';
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,10 +34,10 @@ export default function ForgotPasswordView({ onBack, theme = 'dark' }: ForgotPas
         throw new Error(data.error || 'Failed to send reset code.');
       }
 
-      setSuccess('Reset code sent! Enter it below along with your new password.');
+      toast.showToast('Password reset code sent to your email.', 'success');
       setTimeout(() => {
         if (onBack) onBack();
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       setError(err.message || 'Error sending reset code.');
     } finally {
