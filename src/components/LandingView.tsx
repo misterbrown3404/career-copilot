@@ -39,9 +39,11 @@ interface LandingViewProps {
   onNavigateToApp?: () => void;
   theme?: 'light' | 'dark';
   toggleTheme?: () => void;
+  onShowForgotPassword?: () => void;
+  onShowResetPassword?: () => void;
 }
 
-export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, theme = 'dark', toggleTheme }: LandingViewProps) {
+export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, theme = 'dark', toggleTheme, onShowForgotPassword, onShowResetPassword }: LandingViewProps) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
   
@@ -866,7 +868,11 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
                 onLogin={(profile, token) => {
                   onLogin(profile, token);
                   setShowAuthModal(false);
-                }} 
+                }}
+                onForgotPassword={() => {
+                  setShowAuthModal(false);
+                  onShowForgotPassword?.();
+                }}
               />
             </motion.div>
           </div>

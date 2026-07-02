@@ -6,6 +6,8 @@ import { UserProfile, JobApplication, ResumeDetails } from './types';
 // Views
 import LandingView from './components/LandingView';
 import LoginView from './components/LoginView';
+import ForgotPasswordView from './components/ForgotPasswordView';
+import ResetPasswordView from './components/ResetPasswordView';
 import Sidebar, { ActiveTab } from './components/Sidebar';
 import DashboardView from './components/DashboardView';
 import CVUploadView from './components/CVUploadView';
@@ -43,6 +45,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password'>('login');
 
   // Core synchronized application state
   const [user, setUser] = useState<UserProfile>(emptyUserProfile);
@@ -198,18 +201,18 @@ export default function App() {
   // Auto-route and protect tabs based on active session and role
   useEffect(() => {
     if (isLoggedIn && user?.email) {
-      const isAdmin = user.email.toLowerCase().trim() === 'abdulsalamjibril5@gmail.com';
+      const isAdmin = user.role === 'admin' || user.isAdmin === true;
       if (isAdmin) {
         if (activeTab !== 'admin' && activeTab !== 'settings') {
           setActiveTab('admin');
         }
       } else {
-        if (activeTab === 'landing' || activeTab === 'admin') {
+        if (activeTab === 'admin') {
           setActiveTab('dashboard');
         }
       }
     }
-  }, [isLoggedIn, user?.email, activeTab]);
+  }, [isLoggedIn, user?.email, user?.role, user?.isAdmin, activeTab]);
 
   const handleLogin = (profile: UserProfile, token?: string) => {
     localStorage.setItem('user_email', profile.email);
@@ -218,7 +221,7 @@ export default function App() {
     }
     setUser(profile);
     setIsLoggedIn(true);
-    const isAdmin = profile.email?.toLowerCase().trim() === 'abdulsalamjibril5@gmail.com';
+    const isAdmin = profile.role === 'admin' || profile.isAdmin === true;
     setActiveTab(isAdmin ? 'admin' : 'dashboard');
   };
 
@@ -258,12 +261,20 @@ export default function App() {
   };
 
   if (!isLoggedIn) {
+    if (authView === 'forgot-password') {
+      return <ForgotPasswordView onBack={() => setAuthView('login')} theme={theme} />;
+    }
+    if (authView === 'reset-password') {
+      return <ResetPasswordView onBack={() => setAuthView('login')} theme={theme} />;
+    }
     return (
       <LandingView 
         onLogin={handleLogin} 
         isLoggedIn={false} 
         theme={theme}
         toggleTheme={toggleTheme}
+        onShowForgotPassword={() => setAuthView('forgot-password')}
+        onShowResetPassword={() => setAuthView('reset-password')}
       />
     );
   }

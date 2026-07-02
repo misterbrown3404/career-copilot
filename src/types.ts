@@ -7,6 +7,7 @@ export interface UserProfile {
   resumeScore: number;
   avatar?: string;
   isAdmin?: boolean;
+  role?: 'admin' | 'user';
 }
 
 export type ApplicationStatus = 'wishlist' | 'applied' | 'interviewing' | 'offered' | 'rejected';

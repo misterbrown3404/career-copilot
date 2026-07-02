@@ -810,7 +810,9 @@ app.post('/api/auth/verify-email', authLimiter, async (req, res) => {
         targetIndustry: user.target_industry,
         experienceLevel: user.experience_level,
         resumeScore: user.resume_score,
-        emailVerified: true
+        emailVerified: true,
+        role: user.role || 'user',
+        isAdmin: user.role === 'admin'
       }
     });
   } catch (err) {
@@ -857,7 +859,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         experienceLevel: user.experience_level,
         resumeScore: user.resume_score,
         emailVerified: user.email_verified,
-        role: user.role || (email.trim().toLowerCase() === 'abdulsalamjibril5@gmail.com' ? 'admin' : 'user')
+        role: user.role || 'user',
+        isAdmin: user.role === 'admin'
       }
     });
   } catch (err) {

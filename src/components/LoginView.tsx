@@ -6,9 +6,10 @@ import { UserProfile } from '../types';
 interface LoginViewProps {
   onLogin: (profile: UserProfile, token?: string) => void;
   isModal?: boolean;
+  onForgotPassword?: () => void;
 }
 
-export default function LoginView({ onLogin, isModal = false }: LoginViewProps) {
+export default function LoginView({ onLogin, isModal = false, onForgotPassword }: LoginViewProps) {
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -25,11 +26,6 @@ export default function LoginView({ onLogin, isModal = false }: LoginViewProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
-  const [resetCode, setResetCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [resetEmail, setResetEmail] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,67 +151,6 @@ export default function LoginView({ onLogin, isModal = false }: LoginViewProps) 
       setSuccess('A new 6-digit verification code has been generated.');
     } catch (err: any) {
       setError(err.message || 'Error resending code.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail })
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send reset code.');
-      }
-
-      setSuccess('Reset code sent! Enter it below along with your new password.');
-      setShowResetPassword(true);
-    } catch (err: any) {
-      setError(err.message || 'Error sending reset code.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: resetEmail,
-          code: resetCode,
-          newPassword
-        })
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to reset password.');
-      }
-
-      setSuccess('Password reset successful! You can now sign in.');
-      setResetCode('');
-      setNewPassword('');
-      setResetEmail('');
-      setShowResetPassword(false);
-    } catch (err: any) {
-      setError(err.message || 'Error resetting password.');
     } finally {
       setLoading(false);
     }
@@ -501,11 +436,7 @@ export default function LoginView({ onLogin, isModal = false }: LoginViewProps) 
             <div className="text-center mt-4">
               <button
                 type="button"
-                onClick={() => {
-                  setIsForgotPassword(true);
-                  setError(null);
-                  setSuccess(null);
-                }}
+                onClick={onForgotPassword}
                 className="text-[11px] font-bold text-neutral-400 hover:text-green-400 transition-colors cursor-pointer underline underline-offset-2"
               >
                 Forgot Password?
@@ -514,114 +445,6 @@ export default function LoginView({ onLogin, isModal = false }: LoginViewProps) 
           </form>
         </>
       )}
-      
-      <AnimatePresence mode="popLayout">
-        {isForgotPassword && !showResetPassword && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-4"
-          >
-            <div className="text-center mb-4">
-              <h3 className="font-display font-bold text-white text-sm uppercase tracking-wider">Reset Password</h3>
-              <p className="text-neutral-400 text-[10px] mt-1">Enter your email to receive a reset code.</p>
-            </div>
-            <form onSubmit={handleForgotPassword} className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-display font-bold text-neutral-400 uppercase tracking-wider">Email Address</label>
-                <input
-                  type="email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 text-sm rounded-lg border border-neutral-800 bg-neutral-950 text-white font-sans placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-green-400/50 focus:border-green-400 transition-colors"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-green-400 hover:bg-green-500 disabled:bg-neutral-800 text-neutral-950 disabled:text-neutral-500 font-display font-extrabold uppercase tracking-widest py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 cursor-pointer"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Reset Code'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsForgotPassword(false);
-                  setError(null);
-                  setSuccess(null);
-                }}
-                className="w-full text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              >
-                Back to Sign In
-              </button>
-            </form>
-          </motion.div>
-        )}
-        
-        {showResetPassword && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-4"
-          >
-            <div className="text-center mb-4">
-              <h3 className="font-display font-bold text-white text-sm uppercase tracking-wider">Set New Password</h3>
-              <p className="text-neutral-400 text-[10px] mt-1">Enter the reset code sent to your email.</p>
-            </div>
-            <form onSubmit={handleResetPassword} className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-display font-bold text-neutral-400 uppercase tracking-wider">Reset Code</label>
-                <input
-                  type="text"
-                  value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value)}
-                  required
-                  maxLength={6}
-                  className="w-full px-4 py-2.5 text-sm rounded-lg border border-neutral-800 bg-neutral-950 text-white font-sans placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-green-400/50 focus:border-green-400 transition-colors text-center tracking-widest"
-                  placeholder="000000"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-display font-bold text-neutral-400 uppercase tracking-wider">New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full px-4 py-2.5 text-sm rounded-lg border border-neutral-800 bg-neutral-950 text-white font-sans placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-green-400/50 focus:border-green-400 transition-colors"
-                  placeholder="Min. 6 characters"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-green-400 hover:bg-green-500 disabled:bg-neutral-800 text-neutral-950 disabled:text-neutral-500 font-display font-extrabold uppercase tracking-widest py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 cursor-pointer"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Reset Password'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowResetPassword(false);
-                  setError(null);
-                  setSuccess(null);
-                }}
-                className="w-full text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              >
-                Back to Sign In
-              </button>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
     </motion.div>
   );
 

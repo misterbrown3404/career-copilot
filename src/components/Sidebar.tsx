@@ -34,7 +34,7 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, setActiveTab, user, isOpen, setIsOpen, onLogout, theme = 'dark', toggleTheme }: SidebarProps) {
   const isLight = theme === 'light';
 
-  const isAdmin = user?.email?.toLowerCase().trim() === 'abdulsalamjibril5@gmail.com';
+  const isAdmin = user?.role === 'admin' || user?.isAdmin === true;
 
   const navItems: readonly { id: ActiveTab; label: string; icon: any }[] = isAdmin 
     ? [
