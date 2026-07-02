@@ -737,7 +737,7 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
       return res.status(400).json({ error: 'An account with this email already exists.' });
     }
 
-await supabase.from('users').insert({
+    const { error: insertError } = await supabase.from('users').insert({
       email: email.trim(),
       name,
       password: encryptedPassword,
@@ -749,6 +749,11 @@ await supabase.from('users').insert({
       verification_code: code,
       role: email.trim().toLowerCase() === 'abdulsalamjibril5@gmail.com' ? 'admin' : 'user'
     });
+
+    if (insertError) {
+      console.error('[AUTH] Register insert error:', insertError);
+      return res.status(500).json({ error: `Registration failed: ${insertError.message}` });
+    }
 
     try {
       await resend.emails.send({
@@ -827,9 +832,10 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
   }
 
   try {
-    const { data: user } = await supabase.from('users').select('*').eq('email', email.trim()).single();
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid email or password.' });
+    const { data: user, error: fetchError } = await supabase.from('users').select('*').eq('email', email.trim()).single();
+    if (fetchError || !user) {
+      console.error('[AUTH] Verify fetch error:', fetchError);
+      return res.status(404).json({ error: 'Account not found. If you just registered, the database may still be initializing or the registration insert failed.' });
     }
 
     const encryptedPasswordInput = hashPassword(password);
