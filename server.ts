@@ -1047,7 +1047,7 @@ app.get('/api/user/data', authMiddleware, generalLimiter, async (req, res) => {
 
   try {
     const [usersRes, appsRes, resumesRes, roadmapsRes, chatsRes] = await Promise.all([
-      supabase.from('users').select('name, email, target_role, target_industry, experience_level, resume_score, email_verified').eq('email', userEmail).single(),
+      supabase.from('users').select('name, email, target_role, target_industry, experience_level, resume_score, email_verified, role').eq('email', userEmail).single(),
       supabase.from('applications').select('data').eq('email', userEmail).single(),
       supabase.from('resumes').select('data').eq('email', userEmail).single(),
       supabase.from('roadmaps').select('data').eq('email', userEmail).single(),
@@ -1066,7 +1066,9 @@ app.get('/api/user/data', authMiddleware, generalLimiter, async (req, res) => {
         targetIndustry: usersRes.data.target_industry,
         experienceLevel: usersRes.data.experience_level,
         resumeScore: usersRes.data.resume_score,
-        emailVerified: usersRes.data.email_verified
+        emailVerified: usersRes.data.email_verified,
+        role: usersRes.data.role || 'user',
+        isAdmin: usersRes.data.role === 'admin'
       },
       applications: appsRes.data?.data || [],
       resume: resumesRes.data?.data || null,
