@@ -22,7 +22,6 @@ export default function LoginView({ onLogin, isModal = false, onForgotPassword }
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [verificationEmail, setVerificationEmail] = useState('');
-  const [debugCode, setDebugCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -55,7 +54,6 @@ export default function LoginView({ onLogin, isModal = false, onForgotPassword }
         }
 
         setVerificationEmail(email);
-        setDebugCode(data.verificationCode || '');
         setIsVerifying(true);
         setSuccess('Account created! Please enter the 6-digit code to verify your email.');
       } else {
@@ -81,7 +79,6 @@ export default function LoginView({ onLogin, isModal = false, onForgotPassword }
           const resendData = await resendResponse.json();
           
           setVerificationEmail(email);
-          setDebugCode(resendData.verificationCode || '');
           setIsVerifying(true);
           setError('Your email is not verified yet. We generated a verification code for you.');
         } else {
@@ -147,7 +144,6 @@ export default function LoginView({ onLogin, isModal = false, onForgotPassword }
         throw new Error(data.error || 'Failed to resend code.');
       }
 
-      setDebugCode(data.verificationCode || '');
       setSuccess('A new 6-digit verification code has been generated.');
     } catch (err: any) {
       setError(err.message || 'Error resending code.');
@@ -227,14 +223,6 @@ export default function LoginView({ onLogin, isModal = false, onForgotPassword }
                 className="w-full text-center tracking-[0.5em] text-lg py-2.5 rounded-lg border border-neutral-800 bg-neutral-950 text-white font-mono focus:outline-none focus:ring-2 focus:ring-green-400/50 focus:border-green-400 transition-colors"
               />
             </div>
-
-            {debugCode && (
-              <div className="p-3.5 bg-green-950/20 border border-dashed border-green-800/40 text-green-400 rounded-lg text-xs text-center space-y-1 font-mono">
-                <div className="text-[10px] uppercase font-bold text-green-500">Sandbox Test Mail Inbox</div>
-                <div className="text-base font-extrabold tracking-widest">{debugCode}</div>
-                <div className="text-[9px] text-neutral-400">Copy the verification code above to satisfy email validation.</div>
-              </div>
-            )}
 
             <button
               type="submit"

@@ -164,29 +164,27 @@ async function seedAdminUser() {
   const adminEmail = 'abdulsalamjibril5@gmail.com';
   const encryptedAdminPass = hashPassword('Abdul@1051');
 
-  try {
-    const { data: existingUser } = await supabase.from('users').select('email').eq('email', adminEmail).single();
+  const { data: existingUser } = await supabase.from('users').select('email').eq('email', adminEmail).single();
 
-    if (!existingUser) {
-      await supabase.from('users').insert({
-        email: adminEmail,
-        name: 'Super Admin',
-        password: encryptedAdminPass,
-        target_role: 'System Administrator',
-        target_industry: 'Tech Operations',
-        experience_level: 'Senior Executive',
-        resume_score: 100,
-        email_verified: true,
-        verification_code: '000000',
-        role: 'admin'
-      });
-      console.log(`[SEED] Admin pre-seeded successfully.`);
-    } else {
-      await supabase.from('users').update({ password: encryptedAdminPass, role: 'admin' }).eq('email', adminEmail);
-      console.log(`[SEED] Admin credentials secured`);
-    }
-  } catch (err) {
-    console.error('Error pre-seeding admin:', err);
+  if (!existingUser) {
+    const { error } = await supabase.from('users').insert({
+      email: adminEmail,
+      name: 'Super Admin',
+      password: encryptedAdminPass,
+      target_role: 'System Administrator',
+      target_industry: 'Tech Operations',
+      experience_level: 'Senior Executive',
+      resume_score: 100,
+      email_verified: true,
+      verification_code: '000000',
+      role: 'admin'
+    });
+    if (error) throw new Error(`Failed to seed admin: ${error.message}`);
+    console.log('[SEED] Admin pre-seeded successfully.');
+  } else {
+    const { error } = await supabase.from('users').update({ password: encryptedAdminPass, role: 'admin' }).eq('email', adminEmail);
+    if (error) throw new Error(`Failed to update admin: ${error.message}`);
+    console.log('[SEED] Admin credentials secured');
   }
 }
 
