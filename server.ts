@@ -5,6 +5,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
@@ -36,6 +37,22 @@ const PORT = 3000;
 const app = express();
 
 app.set('trust proxy', 1);
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "https://api.supabase.com", "https://jsearch.p.rapidapi.com", "https://baskarm28-adzuna-v1.p.rapidapi.com", "https://indeed12.p.rapidapi.com", "https://linkedin-data-api.p.rapidapi.com", "https://generativelanguage.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      fontSrc: ["'self'", "data:"],
+      frameSrc: ["'self'", "https://www.google.com", "https://www.youtube.com"],
+    }
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false,
+}));
 
 app.use(express.json());
 

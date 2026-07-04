@@ -22,5 +22,17 @@
       "src": "/(.*)",
       "dest": "/dist/index.html"
     }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; font-src 'self' data:; frame-src 'self' https://www.google.com https://www.youtube.com; connect-src 'self' https://api.supabase.com https://jsearch.p.rapidapi.com https://baskarm28-adzuna-v1.p.rapidapi.com https://indeed12.p.rapidapi.com https://linkedin-data-api.p.rapidapi.com https://generativelanguage.googleapis.com;" }
+      ]
+    }
   ]
 }
