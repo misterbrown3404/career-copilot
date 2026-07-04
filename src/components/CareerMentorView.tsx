@@ -201,7 +201,7 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
           isLight ? 'text-neutral-900' : 'text-white'
         }`}>
           <Users className={`w-6 h-6 ${isLight ? 'text-indigo-600' : 'text-green-400'}`} />
-          <span>Interactive AI Career Mentors</span>
+          <span>Career Mentors</span>
         </h1>
         <p className={`text-sm mt-1 ${isLight ? 'text-neutral-500' : 'text-neutral-450'}`}>
           Chat with specialized executive consultants in software architecture, product delivery, behavioral strategy, and high-compensation salary negotiations.
@@ -369,7 +369,7 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
                     ? 'text-neutral-700 bg-white border border-neutral-200 hover:border-indigo-300 hover:text-indigo-600' 
                     : 'text-neutral-300 bg-neutral-900 border border-neutral-800 hover:border-green-400 hover:text-green-400'
                 }`}
-                aria-label={`Ask AI mentor: ${sug}`}
+                aria-label={`Ask mentor: ${sug}`}
               >
                 {sug}
               </button>
@@ -422,3 +422,4 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
     </div>
   );
 }
+

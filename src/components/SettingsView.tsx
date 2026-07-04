@@ -301,3 +301,4 @@ export default function SettingsView({ user, setUser, theme = 'dark' }: Settings
     </div>
   );
 }
+

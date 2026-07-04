@@ -169,7 +169,7 @@ export default function AppTrackerView({ applications, setApplications, resumeDe
       dateApplied: new Date().toISOString().split('T')[0],
       link: newLink,
       notes: newNotes,
-      matchScore: Math.floor(Math.random() * 15) + 80 // AI matching score
+      matchScore: Math.floor(Math.random() * 15) + 80 // matching score
     };
 
     setApplications(prev => [...prev, added]);
@@ -926,7 +926,7 @@ export default function AppTrackerView({ applications, setApplications, resumeDe
                   <div className="text-xs">
                     <span className="text-neutral-500 font-display font-bold block uppercase tracking-wider text-[9px]">Match Alignment</span>
                     {selectedJob.matchScore ? (
-                      <span className="font-mono font-bold text-green-400 block mt-0.5">{selectedJob.matchScore}% AI Alignment</span>
+                      <span className="font-mono font-bold text-green-400 block mt-0.5">{selectedJob.matchScore}% Match Score</span>
                     ) : (
                       <span className="font-medium text-neutral-500 block mt-0.5">Not Evaluated</span>
                     )}
@@ -952,12 +952,12 @@ export default function AppTrackerView({ applications, setApplications, resumeDe
                   />
                 </div>
 
-                {/* AI Tailoring support */}
+                {/* Document Tailoring support */}
                 <div className="border-t border-neutral-850 pt-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-display font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1">
                       <Sparkles className="w-4 h-4 text-green-400" />
-                      <span>AI Tailoring Assistant</span>
+                      <span>Document Tailoring Assistant</span>
                     </h3>
                     
                     {!selectedJob.coverLetter && (
@@ -986,7 +986,7 @@ export default function AppTrackerView({ applications, setApplications, resumeDe
                       <div className="flex items-center justify-between bg-green-950/40 border border-green-900/40 px-3 py-2 rounded-lg text-xs font-mono text-green-400">
                         <span className="flex items-center gap-1">
                           <FileCheck className="w-4 h-4 text-green-400" />
-                          <span>AI Cover Letter Successfully Generated ({selectedJob.matchScore}% Match)</span>
+                          <span>Cover Letter Successfully Generated ({selectedJob.matchScore}% Match)</span>
                         </span>
                         <button
                           onClick={() => {
@@ -1046,3 +1046,4 @@ export default function AppTrackerView({ applications, setApplications, resumeDe
     </div>
   );
 }
+

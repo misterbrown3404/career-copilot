@@ -97,7 +97,7 @@ export default function DashboardView({ user, applications, setActiveTab, theme 
                 : 'bg-green-400/10 border-green-500/20 text-green-400'
             }`}>
               <Sparkles className="w-3.5 h-3.5" />
-              <span>AI-Powered Insights Active</span>
+              <span>Active Insights Active</span>
             </div>
             <h1 className={`text-2xl sm:text-3xl font-display font-black tracking-tight uppercase ${
               isLight ? 'text-neutral-900' : 'text-white'
@@ -273,7 +273,7 @@ export default function DashboardView({ user, applications, setActiveTab, theme 
             isLight ? 'text-neutral-800' : 'text-white'
           }`}>
             <Sparkles className={`w-4 h-4 ${isLight ? 'text-indigo-600' : 'text-green-400'}`} />
-            <span>AI Copilot Recommended Actions</span>
+            <span>Recommended Actions</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -285,7 +285,7 @@ export default function DashboardView({ user, applications, setActiveTab, theme 
                   ? 'bg-white border-neutral-200 hover:border-indigo-600 hover:shadow-sm' 
                   : 'bg-neutral-900 border-neutral-800 hover:border-green-400'
               }`}
-              aria-label="AI Action: Fix 3 gaps identified in your latest CV scan"
+              aria-label="Recommended Action: Fix 3 gaps identified in your latest CV scan"
             >
               <div className="space-y-2">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-mono font-semibold uppercase tracking-wider border ${
@@ -316,7 +316,7 @@ export default function DashboardView({ user, applications, setActiveTab, theme 
                   ? 'bg-white border-neutral-200 hover:border-indigo-600 hover:shadow-sm' 
                   : 'bg-neutral-900 border-neutral-800 hover:border-green-400'
               }`}
-              aria-label="AI Action: Practice Stripe technical screen questions"
+              aria-label="Recommended Action: Practice Stripe technical screen questions"
             >
               <div className="space-y-2">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-mono font-semibold uppercase tracking-wider border ${
@@ -347,7 +347,7 @@ export default function DashboardView({ user, applications, setActiveTab, theme 
                   ? 'bg-white border-neutral-200 hover:border-indigo-600 hover:shadow-sm' 
                   : 'bg-neutral-900 border-neutral-800 hover:border-green-400'
               }`}
-              aria-label="AI Action: Consult Elena on salary negotiations"
+              aria-label="Recommended Action: Consult Elena on salary negotiations"
             >
               <div className="space-y-2">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-mono font-semibold uppercase tracking-wider border ${
@@ -378,7 +378,7 @@ export default function DashboardView({ user, applications, setActiveTab, theme 
                   ? 'bg-white border-neutral-200 hover:border-indigo-600 hover:shadow-sm' 
                   : 'bg-neutral-900 border-neutral-800 hover:border-green-400'
               }`}
-              aria-label="AI Action: Continue Performance Roadmap Node"
+              aria-label="Recommended Action: Continue Performance Roadmap Node"
             >
               <div className="space-y-2">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-mono font-semibold uppercase tracking-wider border ${
@@ -481,3 +481,4 @@ export default function DashboardView({ user, applications, setActiveTab, theme 
     </div>
   );
 }
+

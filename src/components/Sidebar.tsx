@@ -79,12 +79,12 @@ export default function Sidebar({ activeTab, setActiveTab, user, isOpen, setIsOp
             <h2 className={`font-display font-black text-sm tracking-wider leading-none uppercase bg-clip-text text-transparent bg-gradient-to-r ${
               isLight ? 'from-neutral-950 via-neutral-800 to-indigo-700' : 'from-white via-neutral-100 to-green-300'
             }`}>
-              AURA COPILOT
+              AURA CAREER
             </h2>
             <span className={`text-[9px] font-mono uppercase tracking-[0.2em] font-bold block mt-1 ${
               isLight ? 'text-indigo-600' : 'text-green-400'
             }`}>
-              FUTURISTIC AI
+              CAREER TOOLS
             </span>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function Sidebar({ activeTab, setActiveTab, user, isOpen, setIsOp
           }`}>
             <Sparkles className="w-4 h-4" />
           </div>
-          <span className={`font-display font-black tracking-widest text-sm uppercase ${isLight ? 'text-neutral-900' : 'text-white'}`}>AURA COPILOT</span>
+          <span className={`font-display font-black tracking-widest text-sm uppercase ${isLight ? 'text-neutral-900' : 'text-white'}`}>AURA CAREER</span>
         </div>
         <button
           onClick={() => setIsOpen(true)}
@@ -246,3 +246,4 @@ export default function Sidebar({ activeTab, setActiveTab, user, isOpen, setIsOp
     </>
   );
 }
+

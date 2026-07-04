@@ -158,7 +158,7 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
           <span>Interactive CV Scan & Gaps Analysis</span>
         </h1>
         <p className={`text-sm mt-1 ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
-          Upload or paste your CV. Our AI will analyze your structure, score your keywords against real recruiters' filters, and rewrite low-impact descriptions.
+          Upload or paste your CV. Our platform will analyze your structure, score your keywords against real recruiters' filters, and rewrite low-impact descriptions.
         </p>
       </div>
 
@@ -305,7 +305,7 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    <span>Run AI Copilot Analysis</span>
+                    <span>Smart Analysis</span>
                   </>
                 )}
               </button>
@@ -532,7 +532,7 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
                       </div>
 
                       <div>
-                        <div className={`text-[10px] font-mono font-bold uppercase mb-1 ${isLight ? 'text-indigo-600' : 'text-green-400'}`}>After (AI Optimized)</div>
+                        <div className={`text-[10px] font-mono font-bold uppercase mb-1 ${isLight ? 'text-indigo-600' : 'text-green-400'}`}>After (Optimized)</div>
                         <p className={`text-xs font-semibold p-2.5 rounded border ${
                           isLight ? 'bg-indigo-50/50 border-indigo-100 text-neutral-800' : 'bg-green-950/10 border-green-900/20 text-white'
                         }`}>
@@ -558,7 +558,7 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
           <div className="bg-neutral-900 rounded-lg p-6 sm:p-8 w-full max-w-sm text-center border border-neutral-800 space-y-4">
             <Loader2 className="w-10 h-10 text-green-400 animate-spin mx-auto" />
             <div>
-              <h3 className="font-display font-bold text-white uppercase tracking-wider text-sm">Running AURA AI</h3>
+              <h3 className="font-display font-bold text-white uppercase tracking-wider text-sm">Running Aura Career</h3>
               <p className="text-neutral-400 text-xs mt-1 transition-all duration-300 min-h-[32px] flex items-center justify-center font-mono">
                 {loadingMessage}
               </p>
@@ -569,3 +569,4 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
     </div>
   );
 }
+

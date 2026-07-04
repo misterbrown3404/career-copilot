@@ -150,7 +150,7 @@ export default function ResumeLabView({ resumeDetails, user, setResumeDetails, t
     }));
   };
 
-  // AI bullet improver action
+  // Smart bullet improver action
   const handleImproveBullet = async () => {
     if (!bulletDraft.trim()) return;
     setIsImproving(true);
@@ -217,7 +217,7 @@ export default function ResumeLabView({ resumeDetails, user, setResumeDetails, t
             <span>Interactive Resume Lab & Builder</span>
           </h1>
           <p className={`text-sm mt-1 ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
-            Build and optimize a sleek, recruiter-ready resume in real-time. Use our AI Improver to rewrite plain-text bullet points.
+            Build and optimize a sleek, recruiter-ready resume in real-time. Use our Smart Improver to rewrite plain-text bullet points.
           </p>
         </div>
 
@@ -675,18 +675,18 @@ export default function ResumeLabView({ resumeDetails, user, setResumeDetails, t
           )}
         </div>
 
-        {/* Right Column (Tools Sidebar: AI Bullet optimization, Download) */}
+        {/* Right Column (Tools Sidebar: Smart Bullet optimization, Download) */}
         <div className="xl:col-span-4 space-y-6">
-          {/* AI Bullet Point improver */}
+          {/* Smart Bullet Point improver */}
           <div className={`border rounded-lg p-5 space-y-4 transition-colors ${
             isLight ? 'bg-white border-neutral-200 text-neutral-950 shadow-sm' : 'bg-neutral-900 border-neutral-800 text-white'
           }`}>
             <h3 className="font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2">
               <Sparkles className={`w-4 h-4 ${isLight ? 'text-indigo-600' : 'text-green-400'}`} />
-              <span>AI Bullet Point Optimizer</span>
+              <span>Smart Bullet Point Optimizer</span>
             </h3>
             <p className="text-neutral-500 text-[11px] leading-relaxed font-semibold">
-              Recruiters love results, not tasks. Paste a plain, task-oriented description bullet below and let our AI transform it into a robust metric-driven accomplishment.
+              Recruiters love results, not tasks. Paste a plain, task-oriented description bullet below and let Our platform transform it into a robust metric-driven accomplishment.
             </p>
 
             <div className="space-y-3.5">
@@ -807,3 +807,4 @@ export default function ResumeLabView({ resumeDetails, user, setResumeDetails, t
     </div>
   );
 }
+

@@ -42,7 +42,7 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
   const startInterviewSession = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setLoadingMsg('Connecting to AI Recruiter and compiling questions...');
+    setLoadingMsg('Connecting to Interview Coach and compiling questions...');
 
     try {
       const response = await fetch('/api/gemini/interview-question', {
@@ -190,10 +190,10 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
           isLight ? 'text-neutral-900' : 'text-white'
         }`}>
           <MessageSquareCode className={`w-6 h-6 ${isLight ? 'text-indigo-600' : 'text-green-400'}`} />
-          <span>Interactive AI Interview Coach</span>
+          <span>Interactive Interview Coach</span>
         </h1>
         <p className={`text-sm mt-1 ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
-          Sharpen your delivery. Enter a custom role to sit face-to-face with an adaptive AI Recruiter who grills you with customized tech questions and checks your response structures.
+          Sharpen your delivery. Enter a custom role to sit face-to-face with an adaptive Interview Coach who grills you with customized tech questions and checks your response structures.
         </p>
       </div>
 
@@ -287,7 +287,7 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
           }`}>
             <h3 className="font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2">
               <Award className={`w-4 h-4 ${isLight ? 'text-indigo-600' : 'text-green-400'}`} />
-              <span>AI Coaching Strategy</span>
+              <span>Coaching Strategy</span>
             </h3>
             <ul className={`space-y-3.5 text-xs leading-relaxed list-disc pl-4 font-sans ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
               <li><strong>The STAR Framework:</strong> Answer behavioral questions by explaining the **Situation, Task, Action**, and **Result**.</li>
@@ -356,7 +356,7 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
                       isLight ? 'text-neutral-900' : 'text-white'
                     }`}>
                       <Sparkles className="w-4 h-4 text-green-400" />
-                      <span>Copilot Recruiter Critique</span>
+                      <span>Recruiter Critique</span>
                     </h5>
                     
                     <span className="inline-flex items-center gap-1 font-mono font-bold text-green-400 bg-green-950/40 border border-green-900/30 px-2 py-0.5 rounded text-xs">
@@ -429,19 +429,19 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
             </div>
           </div>
 
-          {/* Right Column: AI Panelist sidebar info */}
+          {/* Right Column: Panelist sidebar info */}
           <div className={`lg:col-span-4 border rounded-lg p-5 sm:p-6 flex flex-col justify-between transition-colors ${
             isLight ? 'bg-white border-neutral-200 text-neutral-950 shadow-sm' : 'bg-neutral-900 border-neutral-800 text-white'
           }`}>
             <div className="space-y-4">
               <div className="flex items-center gap-1.5 border-b pb-2">
                 <User className={`w-5 h-5 ${isLight ? 'text-indigo-600' : 'text-green-400'}`} />
-                <h3 className="font-display font-black text-xs uppercase tracking-wider">AI Recruiter Profile</h3>
+                <h3 className="font-display font-black text-xs uppercase tracking-wider">Interview Coach Profile</h3>
               </div>
 
               <div className="text-center py-4 space-y-2">
                 <div className="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-green-400 mx-auto flex items-center justify-center text-green-400 text-xl font-display font-black">
-                  AI
+                  IC
                 </div>
                 <div>
                   <h4 className="font-display font-bold text-xs uppercase tracking-wide">Technical Recruiter Bot</h4>
@@ -475,7 +475,7 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
 
           <div className="space-y-2">
             <span className="text-[10px] font-mono font-bold text-green-400 uppercase tracking-widest block">Consultation Completed</span>
-            <h2 className="text-xl font-display font-black uppercase tracking-tight">AI Assessment Score report</h2>
+            <h2 className="text-xl font-display font-black uppercase tracking-tight">Assessment Score report</h2>
             <p className="text-neutral-500 text-xs max-w-md mx-auto leading-relaxed">
               Congratulations! You have completed the simulated interview questions. Below is your final score based on your structural delivery andSTAR alignment.
             </p>
@@ -511,7 +511,7 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
           <div className="bg-neutral-900 rounded-lg p-6 sm:p-8 w-full max-w-sm text-center border border-neutral-850 space-y-4">
             <Loader2 className="w-10 h-10 text-green-400 animate-spin mx-auto" />
             <div>
-              <h3 className="font-display font-bold text-white uppercase tracking-wider text-sm">Interactive AI Recruiter</h3>
+              <h3 className="font-display font-bold text-white uppercase tracking-wider text-sm">Interactive Interview Coach</h3>
               <p className="text-neutral-400 text-xs mt-1 transition-all duration-300 min-h-[32px] flex items-center justify-center font-mono">
                 {loadingMsg}
               </p>
@@ -522,3 +522,4 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
     </div>
   );
 }
+

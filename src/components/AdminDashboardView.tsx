@@ -54,7 +54,7 @@ interface AdminDashboardViewProps {
 interface LogEntry {
   id: string;
   timestamp: string;
-  service: 'Auth' | 'Gemini AI' | 'JSearch Jobs' | 'Resume Lab' | 'System Router';
+  service: 'Auth' | 'Core Engine' | 'JSearch Jobs' | 'Resume Lab' | 'System Router';
   level: 'SUCCESS' | 'INFO' | 'WARNING' | 'ERROR';
   message: string;
   latencyMs?: number;
@@ -165,19 +165,19 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
 
   // System Logs feed
   const [logs, setLogs] = useState<LogEntry[]>([
-    { id: '1', timestamp: '11:12:45', service: 'Gemini AI', level: 'SUCCESS', message: 'CV critique compiled successfully using gemini-3.5-flash', latencyMs: 245 },
+    { id: '1', timestamp: '11:12:45', service: 'Core Engine', level: 'SUCCESS', message: 'CV critique compiled successfully', latencyMs: 245 },
     { id: '2', timestamp: '11:13:02', service: 'JSearch Jobs', level: 'INFO', message: 'Aggregator queried for "Senior React Developer" in US. Received 14 results.', latencyMs: 612 },
     { id: '3', timestamp: '11:13:15', service: 'Resume Lab', level: 'SUCCESS', message: 'Resume structural improvement plan cached for session user.', latencyMs: 82 },
     { id: '4', timestamp: '11:14:10', service: 'System Router', level: 'WARNING', message: 'Nginx upstream connection overhead increased above 150ms limit.', latencyMs: 195 },
     { id: '5', timestamp: '11:14:22', service: 'Auth', level: 'SUCCESS', message: 'Secure JSON account payload sync succeeded with highly encrypted credentials.', latencyMs: 44 },
-    { id: '6', timestamp: '11:15:00', service: 'Gemini AI', level: 'ERROR', message: 'Gemini model query timed out. Request retried on fallback channel.', latencyMs: 5000 },
-    { id: '7', timestamp: '11:15:04', service: 'Gemini AI', level: 'SUCCESS', message: 'Stitch query resolved successfully on secondary pipeline.', latencyMs: 820 },
+    { id: '6', timestamp: '11:15:00', service: 'Core Engine', level: 'ERROR', message: 'CV processing timed out. Request retried on fallback channel.', latencyMs: 5000 },
+    { id: '7', timestamp: '11:15:04', service: 'Core Engine', level: 'SUCCESS', message: 'Processing resolved successfully on secondary pipeline.', latencyMs: 820 },
     { id: '8', timestamp: '11:15:33', service: 'JSearch Jobs', level: 'INFO', message: 'Aggregator cached results for company "Epic Games".', latencyMs: 145 },
   ]);
 
   const [logSearch, setLogSearch] = useState('');
   const [logLevelFilter, setLogLevelFilter] = useState<'ALL' | 'SUCCESS' | 'INFO' | 'WARNING' | 'ERROR'>('ALL');
-  const [logServiceFilter, setLogServiceFilter] = useState<'ALL' | 'Auth' | 'Gemini AI' | 'JSearch Jobs' | 'Resume Lab'>('ALL');
+  const [logServiceFilter, setLogServiceFilter] = useState<'ALL' | 'Auth' | 'Core Engine' | 'JSearch Jobs' | 'Resume Lab'>('ALL');
 
   const [simulationSpeed, setSimulationSpeed] = useState<number>(1);
   const [isSimulatingSpike, setIsSimulatingSpike] = useState(false);
@@ -187,18 +187,18 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
     return {
       welcome: {
         name: '🚀 System Welcome & Launch Campaign',
-        subject: '🚀 Welcome to AURA AI: Your Ultimate AI Career Flightdeck!',
-        body: `Hello Aura Pioneer,\n\nWe are absolutely thrilled to welcome you to AURA AI, the futuristic AI Career Accelerator!\n\nHere is a list of the premium AI modules unlocked on your dashboard:\n1. 🌟 Welcome Portal - Explore personalized career telemetry and job market analytics.\n2. 📁 Resume Lab & Upload - Parse your CV instantly, see your match score, and rewrite bullets live.\n3. 🔍 Job Search Tracker - Hunt jobs with high fidelity filters, track applications, and compile cover letters.\n4. 💬 AI Interview Coach - Participate in fully realistic role-play feedback loops powered by Gemini.\n5. 🗺️ Learning Roadmaps - Generate structured career milestone roadmaps to achieve technical superiority.\n\nLog in now to launch your career: http://localhost:3000\n\nTo your continuous elevation,\nThe AURA AI Engineering Team`
+        subject: '🚀 Welcome to Aura Career: Your Ultimate Career Flightdeck!',
+        body: `Hello Aura Pioneer,\n\nWe are absolutely thrilled to welcome you to Aura Career, the futuristic Career Accelerator!\n\nHere is a list of the premium modules unlocked on your dashboard:\n1. 🌟 Welcome Portal - Explore personalized career telemetry and job market analytics.\n2. 📁 Resume Lab & Upload - Parse your CV instantly, see your match score, and rewrite bullets live.\n3. 🔍 Job Search Tracker - Hunt jobs with high fidelity filters, track applications, and compile cover letters.\n4. 💬 Interview Coach - Participate in fully realistic role-play feedback loops.\n5. 🗺️ Learning Roadmaps - Generate structured career milestone roadmaps to achieve technical superiority.\n\nLog in now to launch your career: http://localhost:3000\n\nTo your continuous elevation,\nThe Aura Career Engineering Team`
       },
       premium: {
         name: '💎 VIP Premium 50% Liftoff Offer',
         subject: '💎 VIP Invitation: Secure 50% Off Lifetime Premium Access!',
-        body: `Hello Outstanding Professional,\n\nAs part of our exclusive AURA AI launch cohort, we are inviting you to upgrade to the VIP Premium Flight Plan at a massive 50% discount!\n\nPremium Unlocks:\n- Unlimited Gemini-3.5-Pro CV critiques and personalized roadmap expansions.\n- Unrestricted mock interview role-play simulations with elite industrial categories.\n- Direct access to high-fidelity job search aggregator indexes.\n\nUse Code: AURAVIP50 on your setting tab to secure this exclusive discount today!\n\nElevate your career trajectory now: http://localhost:3000\n\nWarm regards,\nThe AURA AI Operations Board`
+        body: `Hello Outstanding Professional,\n\nAs part of our exclusive Aura Career launch cohort, we are inviting you to upgrade to the VIP Premium Flight Plan at a massive 50% discount!\n\nPremium Unlocks:\n- Unlimited CV critiques and personalized roadmap expansions.\n- Unrestricted mock interview role-play simulations with elite industrial categories.\n- Direct access to high-fidelity job search aggregator indexes.\n\nUse Code: AURAVIP50 on your setting tab to secure this exclusive discount today!\n\nElevate your career trajectory now: http://localhost:3000\n\nWarm regards,\nThe Aura Career Operations Board`
       },
       digest: {
         name: '🎯 Monthly Career Advancement Digest',
-        subject: '🎯 Master Your Interview Loop with Generative AI Predictions',
-        body: `Hello Future Leader,\n\nIn this month's Aura Tech Career Digest, our elite talent advisors share three secrets to securing senior engineering offers in 2026:\n\n1. Quantify Your Experience: Always write your achievements in Google's X-Y-Z formula: "Accomplished [X] as measured by [Y], by doing [Z]".\n2. AI Interview Sandbox: Use our mock coach to practice response structure. Aim for the STAR format (Situation, Task, Action, Result).\n3. High-Performance Roadmaps: Keep updating your skill tree using our personalized learning modules to stay ahead of market specifications.\n\nRead the full career analysis on your Welcome Portal now!\n\nKeep pushing boundaries,\nThe Aura Mentorship Circle`
+        subject: '🎯 Master Your Interview Loop with Smart Career Predictions',
+        body: `Hello Future Leader,\n\nIn this month's Aura Tech Career Digest, our elite talent advisors share three secrets to securing senior engineering offers in 2026:\n\n1. Quantify Your Experience: Always write your achievements in Google's X-Y-Z formula: "Accomplished [X] as measured by [Y], by doing [Z]".\n2. Interview Sandbox: Use our mock coach to practice response structure. Aim for the STAR format (Situation, Task, Action, Result).\n3. High-Performance Roadmaps: Keep updating your skill tree using our personalized learning modules to stay ahead of market specifications.\n\nRead the full career analysis on your Welcome Portal now!\n\nKeep pushing boundaries,\nThe Aura Mentorship Circle`
       },
       blank: {
         name: '📝 Custom Broadcast (Blank Canvas)',
@@ -377,7 +377,7 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
 
   const trafficShareData = useMemo(() => {
     return [
-      { name: 'Gemini AI Engine', value: currentRequests.gemini, color: '#a78bfa' },
+      { name: 'Core Engine', value: currentRequests.gemini, color: '#a78bfa' },
       { name: 'JSearch Jobs API', value: currentRequests.jsearch, color: '#34d399' },
       { name: 'Resume Lab Parser', value: currentRequests.parser, color: '#60a5fa' },
     ];
@@ -436,7 +436,7 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
         return copy;
       });
 
-      const services: ('Gemini AI' | 'JSearch Jobs' | 'Resume Lab')[] = ['Gemini AI', 'JSearch Jobs', 'Resume Lab'];
+      const services: ('Core Engine' | 'JSearch Jobs' | 'Resume Lab')[] = ['Core Engine', 'JSearch Jobs', 'Resume Lab'];
       const chosenService = services[Math.floor(Math.random() * services.length)];
       setLogs(prev => [
         ...prev,
@@ -462,7 +462,7 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
         return copy;
       });
 
-      const errServices: ('Gemini AI' | 'JSearch Jobs' | 'Resume Lab' | 'System Router')[] = ['Gemini AI', 'JSearch Jobs', 'Resume Lab', 'System Router'];
+      const errServices: ('Core Engine' | 'JSearch Jobs' | 'Resume Lab' | 'System Router')[] = ['Core Engine', 'JSearch Jobs', 'Resume Lab', 'System Router'];
       const chosenErrService = errServices[Math.floor(Math.random() * errServices.length)];
       const errors = [
         'Rate limit exhausted on downstream integration API pipeline.',
@@ -679,7 +679,7 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
                 isLight ? 'bg-white border-neutral-200 text-neutral-950' : 'bg-neutral-900 border-neutral-800 text-white'
               }`}>
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-wider block">Copilot Health Status</span>
+                  <span className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-wider block">Platform Status</span>
                   <div className="text-lg font-black font-display tracking-tight uppercase flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
                     <span className="text-emerald-500">EXCELLENT</span>
@@ -858,7 +858,7 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
                         }} 
                       />
                       <Legend iconType="circle" />
-                      <Bar dataKey="gemini" name="Gemini AI API" stackId="a" fill="#a78bfa" />
+                      <Bar dataKey="gemini" name="Core Engine API" stackId="a" fill="#a78bfa" />
                       <Bar dataKey="jsearch" name="JSearch Jobs API" stackId="a" fill="#34d399" />
                       <Bar dataKey="parser" name="Resume Parser" stackId="a" fill="#60a5fa" />
                     </BarChart>
@@ -1085,7 +1085,7 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
                     >
                       <option value="ALL">All Services</option>
                       <option value="Auth">Auth Gateway</option>
-                      <option value="Gemini AI">Gemini AI</option>
+                      <option value="Core Engine">Core Engine</option>
                       <option value="JSearch Jobs">JSearch Jobs</option>
                       <option value="Resume Lab">Resume Lab</option>
                     </select>
@@ -1404,7 +1404,7 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
                     <input
                       type="text"
                       required
-                       placeholder="e.g. 🚀 Welcome to AURA AI..."
+                       placeholder="e.g. 🚀 Welcome to Aura Career..."
                       value={campaignSubject}
                       onChange={(e) => setCampaignSubject(e.target.value)}
                       className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none focus:ring-1 focus:ring-green-400 font-semibold ${

@@ -107,3 +107,4 @@ export interface ResumeDetails {
   }[];
   skills: string[];
 }
+

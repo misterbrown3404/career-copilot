@@ -59,7 +59,7 @@ export default function ForgotPasswordView({ onBack, theme = 'dark' }: ForgotPas
           <div className="relative inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 text-neutral-950 mb-4 shadow-lg shadow-green-500/20">
             <Mail className="w-6 h-6 relative z-10" />
           </div>
-          <h1 className="text-xl font-display font-black text-white tracking-widest uppercase">AURA AI</h1>
+          <h1 className="text-xl font-display font-black text-white tracking-widest uppercase">Aura Career</h1>
           <p className="text-neutral-400 text-xs font-mono uppercase tracking-wider mt-1">Reset Password</p>
         </div>
 
@@ -122,3 +122,4 @@ export default function ForgotPasswordView({ onBack, theme = 'dark' }: ForgotPas
     </div>
   );
 }
+

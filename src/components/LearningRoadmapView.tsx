@@ -213,10 +213,10 @@ export default function LearningRoadmapView({ user, theme = 'dark' }: LearningRo
             isLight ? 'text-neutral-900' : 'text-white'
           }`}>
             <Map className={`w-6 h-6 ${isLight ? 'text-indigo-600' : 'text-green-400'}`} />
-            <span>AI Customized Learning Roadmap</span>
+            <span>Personalized Learning Roadmap</span>
           </h1>
           <p className={`text-sm mt-1 font-sans ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
-            Accelerate your career transition. Our AI maps out a tailored step-by-step curriculum with validated resources and portfolio projects based on your target role.
+            Accelerate your career transition. Our platform maps out a tailored step-by-step curriculum with validated resources and portfolio projects based on your target role.
           </p>
         </div>
 
@@ -347,7 +347,7 @@ export default function LearningRoadmapView({ user, theme = 'dark' }: LearningRo
 
           {/* Validation resources list */}
           <div className="space-y-3.5">
-            <span className="text-[10px] text-neutral-500 font-mono font-bold uppercase tracking-wider px-1 block">AI Curated Resources</span>
+            <span className="text-[10px] text-neutral-500 font-mono font-bold uppercase tracking-wider px-1 block">Selected Resources</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {selectedNode.resources.map((res, i) => (
                 <motion.a
@@ -398,3 +398,4 @@ export default function LearningRoadmapView({ user, theme = 'dark' }: LearningRo
     </div>
   );
 }
+

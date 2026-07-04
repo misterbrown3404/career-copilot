@@ -168,8 +168,8 @@ export default function LoginView({ onLogin, isModal = false, onForgotPassword }
           <div className="absolute inset-0 border border-white/20 rounded-xl animate-[spin_8s_linear_infinite]" />
           <Sparkles className="w-6 h-6 text-neutral-950 relative z-10" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-white via-neutral-100 to-green-300">AURA AI</h1>
-        <p className="text-neutral-400 text-xs font-mono uppercase tracking-wider mt-1.5">Futuristic AI Job Search & Predictive Career Sandbox</p>
+        <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-white via-neutral-100 to-green-300">AURA</h1>
+        <p className="text-neutral-400 text-xs font-mono uppercase tracking-wider mt-1.5">Smart Career Workspace</p>
       </div>
 
       <AnimatePresence mode="popLayout">
@@ -450,3 +450,4 @@ export default function LoginView({ onLogin, isModal = false, onForgotPassword }
     </div>
   );
 }
+

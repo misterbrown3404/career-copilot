@@ -31,7 +31,7 @@ interface JobListing {
   salary: string;
   url: string;
   description: string;
-  source: 'JSearch' | 'Adzuna' | 'Indeed' | 'LinkedIn' | 'AI Fallback';
+   source: 'JSearch' | 'Adzuna' | 'Indeed' | 'LinkedIn' | 'Local Fallback';
   date_posted?: string;
 }
 
@@ -228,16 +228,16 @@ export default function JobsView({ user, applications, setApplications }: JobsVi
             <span className="text-[10px] text-neutral-500 font-mono font-bold uppercase tracking-wider block">API Config Status</span>
             <div className="flex flex-wrap gap-1.5 mt-1">
               <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-mono font-bold uppercase border ${stats.apiKeys.jsearch ? 'bg-green-950/30 text-green-400 border-green-900/40' : 'bg-neutral-950 text-neutral-500 border-neutral-850'}`}>
-                JSearch: {stats.apiKeys.jsearch ? 'LIVE' : 'AI'}
+                JSearch: {stats.apiKeys.jsearch ? 'LIVE' : 'OFFLINE'}
               </span>
               <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-mono font-bold uppercase border ${stats.apiKeys.adzuna ? 'bg-green-950/30 text-green-400 border-green-900/40' : 'bg-neutral-950 text-neutral-500 border-neutral-850'}`}>
-                Adzuna: {stats.apiKeys.adzuna ? 'LIVE' : 'AI'}
+                Adzuna: {stats.apiKeys.adzuna ? 'LIVE' : 'OFFLINE'}
               </span>
               <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-mono font-bold uppercase border ${stats.apiKeys.indeed ? 'bg-green-950/30 text-green-400 border-green-900/40' : 'bg-neutral-950 text-neutral-500 border-neutral-850'}`}>
-                Indeed: {stats.apiKeys.indeed ? 'LIVE' : 'AI'}
+                Indeed: {stats.apiKeys.indeed ? 'LIVE' : 'OFFLINE'}
               </span>
               <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-mono font-bold uppercase border ${stats.apiKeys.linkedin ? 'bg-green-950/30 text-green-400 border-green-900/40' : 'bg-neutral-950 text-neutral-500 border-neutral-850'}`}>
-                LinkedIn: {stats.apiKeys.linkedin ? 'LIVE' : 'AI'}
+                LinkedIn: {stats.apiKeys.linkedin ? 'LIVE' : 'OFFLINE'}
               </span>
             </div>
           </div>
@@ -438,3 +438,4 @@ export default function JobsView({ user, applications, setApplications }: JobsVi
     </div>
   );
 }
+
