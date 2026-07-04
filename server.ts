@@ -613,7 +613,8 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
       return res.json({ provider: 'jsearch', results });
 
     } else if (prov === 'adzuna') {
-      const url = `https://baskarm28-adzuna-v1.p.rapidapi.com/jobs/${encodeURIComponent(cntry)}/history?location0=${encodeURIComponent('location0=' + loc)}`;
+      const adzunaPage = 1;
+      const url = `https://baskarm28-adzuna-v1.p.rapidapi.com/jobs/${encodeURIComponent(cntry)}/search/${adzunaPage}?what=${encodeURIComponent(q)}&where=${encodeURIComponent(loc)}&results_per_page=10`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -623,21 +624,16 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
         }
       });
       const data = await response.json() as any;
-
-      // Map statistics or trends into unified results
-      const avgSalary = data.average_salary || 55000;
-      const rawResults = [
-        {
-          id: `adzuna-1`,
-          company: 'Market Trends (Adzuna)',
-          role: `${q} in ${loc}`,
-          salary: `Average Salary: £${Math.round(avgSalary).toLocaleString()} / yr`,
-          location: loc.toUpperCase(),
-          link: `https://www.adzuna.co.uk/`,
-          notes: `Verified historical metrics based on active recruitment peaks.`,
-          matchScore: 85
-        }
-      ];
+      const rawResults = (data.results || []).map((item: any) => ({
+        id: item.id || `adzuna-${Math.random().toString(36).substring(2, 9)}`,
+        company: item.company?.display_name || item.company || 'Unknown Company',
+        role: item.title || `${q} in ${loc}`,
+        salary: item.salary_min || item.salary_max ? `£${item.salary_min || 0}${item.salary_max ? ` - £${item.salary_max}` : ''} / yr` : 'Not Specified',
+        location: item.location?.display_name || item.location || loc,
+        link: item.redirect_url || `https://www.adzuna.co.uk/`,
+        notes: item.description ? item.description.substring(0, 200) + '...' : 'Adzuna Job Listing',
+        matchScore: Math.floor(Math.random() * 15) + 80
+      }));
 
       const results = enrichSearchResults(rawResults, q, loc, cntry, comp, 'adzuna');
       return res.json({ provider: 'adzuna', results });
@@ -645,7 +641,7 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
     } else if (prov === 'indeed') {
       let rawResults: any[] = [];
       try {
-        const url = `https://indeed12.p.rapidapi.com/company/${encodeURIComponent(comp || 'Epic Games')}/jobs?locality=${encodeURIComponent(cntry)}&start=1`;
+        const url = `https://indeed12.p.rapidapi.com/jobs/search?query=${encodeURIComponent(q)}&location=${encodeURIComponent(loc)}&locality=${encodeURIComponent(cntry)}&page_id=1`;
         const response = await fetch(url, {
           method: 'GET',
           headers: {
@@ -658,12 +654,12 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
         const rawJobs = data.jobs || data.data || [];
         rawResults = rawJobs.map((item: any) => ({
           id: item.id || `indeed-${Math.random().toString(36).substring(2, 9)}`,
-          company: comp || 'Epic Games',
+          company: item.company || comp || 'Indeed Company',
           role: item.title || item.role || 'Job Position',
           salary: item.salary || 'Not Specified',
-          location: item.location || 'United States',
-          link: item.link || `https://www.indeed.com/q-${encodeURIComponent(comp || 'Epic Games')}-jobs.html`,
-          notes: item.summary || 'Indeed Job Listing',
+          location: item.location || loc,
+          link: item.link || `https://www.indeed.com/q-${encodeURIComponent(q || 'job')}-jobs.html`,
+          notes: item.summary || item.description || 'Indeed Job Listing',
           matchScore: Math.floor(Math.random() * 15) + 80
         }));
       } catch (innerErr) {
