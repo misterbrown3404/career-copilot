@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import nodemailer from 'nodemailer';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
@@ -24,7 +25,35 @@ if (!supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey || '');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Aura Career <onboarding@resend.dev>';
+
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+const SMTP_SECURE = process.env.SMTP_SECURE === 'true';
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+
+let transporter: nodemailer.Transporter | null = null;
+if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  });
+}
+
+async function sendMail(to: string, subject: string, html: string) {
+  if (transporter) {
+    return transporter.sendMail({ from: EMAIL_FROM, to, subject, html });
+  }
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error('No email provider configured. Set RESEND_API_KEY or SMTP env vars.');
+  }
+  const resendClient = new Resend(apiKey);
+  return resendClient.emails.send({ from: EMAIL_FROM, to, subject, html });
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
@@ -771,12 +800,11 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
     }
 
     try {
-      await resend.emails.send({
-        from: 'AURA AI <onboarding@resend.dev>',
-        to: email.trim(),
-        subject: 'Your AURA AI Verification Code',
-        html: `<p>Your verification code is: <strong>${code}</strong></p>`
-      });
+      await sendMail(
+        email.trim(),
+        'Your AURA AI Verification Code',
+        `<p>Your verification code is: <strong>${code}</strong></p>`
+      );
       console.log(`[AUTH] Verification email sent to ${email}`);
     } catch (emailErr) {
       console.error('[AUTH] Email send error:', emailErr);
@@ -905,12 +933,11 @@ app.post('/api/auth/resend-code', authLimiter, async (req, res) => {
     await supabase.from('users').update({ verification_code: code }).eq('email', email.trim());
 
     try {
-      await resend.emails.send({
-        from: 'AURA AI <onboarding@resend.dev>',
-        to: email.trim(),
-        subject: 'Your New AURA AI Verification Code',
-        html: `<p>Your new verification code is: <strong>${code}</strong></p>`
-      });
+      await sendMail(
+        email.trim(),
+        'Your New AURA AI Verification Code',
+        `<p>Your new verification code is: <strong>${code}</strong></p>`
+      );
       console.log(`[AUTH] Verification email sent to ${email}`);
     } catch (emailErr) {
       console.error('[AUTH] Email send error:', emailErr);
@@ -946,12 +973,11 @@ app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
     await supabase.from('users').update({ verification_code: resetCode }).eq('email', email.trim());
 
     try {
-      await resend.emails.send({
-        from: 'AURA AI <onboarding@resend.dev>',
-        to: email.trim(),
-        subject: 'Your AURA AI Password Reset Code',
-        html: `<p>Your password reset code is: <strong>${resetCode}</strong></p>`
-      });
+      await sendMail(
+        email.trim(),
+        'Your AURA AI Password Reset Code',
+        `<p>Your password reset code is: <strong>${resetCode}</strong></p>`
+      );
       console.log(`[AUTH] Password reset code sent to ${email}`);
     } catch (emailErr) {
       console.error('[AUTH] Password reset email error:', emailErr);
