@@ -808,7 +808,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
       </section>
 
       {/* Trust & Safety Badges Footer */}
-      <footer className={`px-6 sm:px-12 py-12 border-t text-center text-neutral-500 text-xs font-mono space-y-6 transition-all duration-300 ${
+      <footer className={`px-6 sm:px-12 py-12 border-t text-center text-neutral-500 text-xs font-mono space-y-4 transition-all duration-300 ${
         isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950 border-neutral-900'
       }`}>
         <div className={`flex flex-wrap items-center justify-center gap-6 text-[10px] uppercase tracking-wider font-extrabold ${
@@ -816,7 +816,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
         }`}>
           <span className="flex items-center gap-1.5">
             <ShieldCheck className={`w-4 h-4 ${isLight ? 'text-indigo-600' : 'text-green-400'}`} /> 
-            AES-256 Workspace Encryption
+            AES-256 Encryption
           </span>
           <span className="text-neutral-400 dark:text-neutral-800">•</span>
           <span className="flex items-center gap-1.5">
@@ -826,11 +826,20 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
           <span className="text-neutral-400 dark:text-neutral-800">•</span>
           <span className="flex items-center gap-1.5">
             <Sparkles className={`w-4 h-4 ${isLight ? 'text-indigo-600' : 'text-green-400'}`} /> 
-            Server-Side Gemini Intelligence
+            Server-Side AI
           </span>
         </div>
+        <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] uppercase tracking-wider">
+          <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+          <span className="text-neutral-400 dark:text-neutral-800">•</span>
+          <a href="/terms" className="hover:text-white transition-colors">Terms</a>
+          <span className="text-neutral-400 dark:text-neutral-800">•</span>
+          <a href="/security" className="hover:text-white transition-colors">Security</a>
+          <span className="text-neutral-400 dark:text-neutral-800">•</span>
+          <a href="/contact" className="hover:text-white transition-colors">Contact</a>
+        </div>
         <div className="text-[9px] text-neutral-500">
-          &copy; 2026 CAREER COPILOT. ALL DEVELOPMENT SYSTEM STAGE PROTOCOLS REGISTERED IN CONTAINER WORKSPACE PORT 3000.
+          &copy; 2026 AURA AI. ALL DEVELOPMENT SYSTEM STAGE PROTOCOLS REGISTERED IN CONTAINER WORKSPACE PORT 3000.
         </div>
       </footer>
 
