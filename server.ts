@@ -1060,10 +1060,16 @@ app.get('/api/admin/users', generalLimiter, async (req, res) => {
 });
 
 // Send newsletter to users (admin only)
-app.post('/api/admin/send-newsletter', generalLimiter, (req, res) => {
-  const { adminEmail, subject, content, recipientEmails } = req.body;
+app.post('/api/admin/send-newsletter', authMiddleware, generalLimiter, async (req, res) => {
+  const adminEmail = (req as any).user?.email;
+  const { subject, content, recipientEmails } = req.body;
 
-  if (adminEmail?.trim().toLowerCase() !== 'abdulsalamjibril5@gmail.com') {
+  if (!adminEmail) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+
+  const { data: adminUser } = await supabase.from('users').select('role').eq('email', adminEmail).single();
+  if (!adminUser || adminUser.role !== 'admin') {
     return res.status(403).json({ error: 'Access denied. You do not have administrator privileges.' });
   }
 
@@ -1071,11 +1077,34 @@ app.post('/api/admin/send-newsletter', generalLimiter, (req, res) => {
     return res.status(400).json({ error: 'Subject, content, and at least one recipient are required.' });
   }
 
-  console.log(`[NEWSLETTER] Dispatched campaign "${subject}" to ${recipientEmails.length} users by Admin: ${adminEmail}`);
+  const results = { success: [] as string[], failed: [] as { email: string; error: string }[] };
+
+  for (const recipient of recipientEmails) {
+    try {
+      await sendMail(
+        recipient.trim(),
+        subject,
+        `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+          <h2 style="color: #065f46;">${subject.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h2>
+          <div style="white-space: pre-wrap; line-height: 1.6;">${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+          <p style="font-size: 12px; color: #6b7280;">Sent via Aura Career</p>
+        </div>`
+      );
+      results.success.push(recipient.trim());
+    } catch (err: any) {
+      results.failed.push({ email: recipient.trim(), error: err.message || 'Unknown error' });
+    }
+  }
+
+  console.log(`[NEWSLETTER] Campaign "${subject}" dispatched by ${adminEmail}. Success: ${results.success.length}, Failed: ${results.failed.length}`);
 
   res.json({
     success: true,
-    message: `Campaign "${subject}" successfully dispatched to ${recipientEmails.length} active users!`,
+    message: `Campaign "${subject}" dispatched.`,
+    sent: results.success.length,
+    failed: results.failed.length,
+    failedEmails: results.failed,
     timestamp: new Date().toLocaleTimeString()
   });
 });
