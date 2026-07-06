@@ -13,8 +13,8 @@ import { Resend } from 'resend';
 import multer from 'multer';
 import { createRequire } from 'module';
 
-// Use createRequire for CJS packages (pdf-parse, mammoth) in ESM context
-const _require = createRequire(import.meta.url);
+// Use createRequire for CJS packages (pdf-parse, mammoth) in bundled output
+const _require = createRequire(__filename);
 const pdfParse = _require('pdf-parse');
 const mammoth = _require('mammoth');
 
