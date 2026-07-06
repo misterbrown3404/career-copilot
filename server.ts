@@ -10,6 +10,13 @@ import nodemailer from 'nodemailer';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import multer from 'multer';
+import { createRequire } from 'module';
+
+// Use createRequire for CJS packages (pdf-parse, mammoth) in ESM context
+const _require = createRequire(import.meta.url);
+const pdfParse = _require('pdf-parse');
+const mammoth = _require('mammoth');
 
 dotenv.config();
 
@@ -615,12 +622,55 @@ Structure it beautifully. Return a JSON object with:
 // ==========================================
 // API ROUTE: RapidAPI Job Search Integration
 // ==========================================
-function enrichSearchResults(results: any[], q: string, loc: string, cntry: string, comp: string, prov: string) {
-  return results;
+
+/** Normalise a JSearch job item from search-v2 (data.data.jobs[]) into the standard JobListing shape */
+function normaliseJSearchJob(item: any, searchQuery: string): object {
+  return {
+    id: item.job_id || `jsearch-${Math.random().toString(36).substring(2, 9)}`,
+    title: item.job_title || 'Software Engineer',
+    company: item.employer_name || 'Unknown Company',
+    location: [item.job_city, item.job_state].filter(Boolean).join(', ') || item.job_country || 'Remote',
+    salary: item.job_min_salary
+      ? `$${item.job_min_salary}${item.job_max_salary ? ` – $${item.job_max_salary}` : ''} / yr`
+      : 'Not Specified',
+    url: item.job_apply_link || `https://google.com/search?q=${encodeURIComponent((item.job_title || '') + ' ' + (item.employer_name || ''))}`,
+    description: item.job_description ? item.job_description.substring(0, 300) + '...' : 'No description provided.',
+    source: 'JSearch' as const,
+    date_posted: item.job_posted_at_datetime_utc ? item.job_posted_at_datetime_utc.split('T')[0] : undefined
+  };
+}
+
+/** Fetch JSearch jobs. Falls back to worldwide (country=all) when no location results are returned. */
+async function fetchJSearchJobs(q: string, loc: string, cntry: string, apiKey: string): Promise<object[]> {
+  const buildUrl = (locationStr: string, countryStr: string) =>
+    `https://jsearch.p.rapidapi.com/search-v2?query=${encodeURIComponent(q + ' ' + locationStr)}&num_pages=1&country=${encodeURIComponent(countryStr)}&date_posted=all`;
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-rapidapi-host': 'jsearch.p.rapidapi.com',
+    'x-rapidapi-key': apiKey
+  };
+
+  // First attempt: with the user-provided location and country
+  let response = await fetch(buildUrl(loc, cntry), { method: 'GET', headers });
+  let data = await response.json() as any;
+  // JSearch v2 returns { status, data: { jobs: [] } }
+  let jobs: any[] = (data.data?.jobs || data.data || []);
+
+  // Fallback: worldwide if no results with the given location filter
+  if (jobs.length === 0) {
+    console.log(`[JOBS] No results for location "${loc}", retrying worldwide...`);
+    response = await fetch(buildUrl(q, 'all'), { method: 'GET', headers });
+    data = await response.json() as any;
+    jobs = data.data?.jobs || data.data || [];
+  }
+
+  return jobs.map((item: any) => normaliseJSearchJob(item, q));
 }
 
 app.get('/api/jobs/search', generalLimiter, async (req, res) => {
-  const { provider, query, location, country, company } = req.query;
+  // Accept both `source` (sent by frontend) and `provider` (legacy) as the provider key
+  const { source, provider, query, location, country, company } = req.query;
   const apiKey = process.env.RAPIDAPI_KEY;
 
   if (!apiKey) {
@@ -628,42 +678,20 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
     return res.status(500).json({ error: 'Job search service is not configured.' });
   }
 
-  const prov = String(provider || 'jsearch').toLowerCase();
-  const q = String(query || 'developer');
-  const loc = String(location || 'chicago');
-  const cntry = String(country || 'us').toLowerCase();
+  const prov = String(source || provider || 'jsearch').toLowerCase();
+  const q = String(query || 'developer').trim();
+  const loc = String(location || '').trim() || 'worldwide';
+  const cntry = String(country || 'all').toLowerCase();
   const comp = String(company || '').trim();
 
   try {
-    if (prov === 'jsearch') {
-      const url = `https://jsearch.p.rapidapi.com/search-v2?query=${encodeURIComponent(q + ' jobs in ' + loc)}&num_pages=1&country=${encodeURIComponent(cntry)}&date_posted=all`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-rapidapi-host': 'jsearch.p.rapidapi.com',
-          'x-rapidapi-key': apiKey
-        }
-      });
-      const data = await response.json() as any;
-      
-      const rawResults = (data.data || []).map((item: any) => ({
-        id: item.job_id || `jsearch-${Math.random().toString(36).substring(2, 9)}`,
-        company: item.employer_name || 'Unknown Company',
-        role: item.job_title || 'Software Engineer',
-        salary: item.job_min_salary ? `$${item.job_min_salary}${item.job_max_salary ? ` - $${item.job_max_salary}` : ''} / year` : 'Not Specified',
-        location: [item.job_city, item.job_state].filter(Boolean).join(', ') || item.job_country || 'Remote',
-        link: item.job_apply_link || 'https://google.com/search?q=' + encodeURIComponent((item.job_title || '') + ' ' + (item.employer_name || '')),
-        notes: item.job_description ? item.job_description.substring(0, 200) + '...' : 'No description provided.',
-        matchScore: Math.floor(Math.random() * 15) + 80
-      }));
-
-      const results = enrichSearchResults(rawResults, q, loc, cntry, comp, 'jsearch');
-      return res.json({ provider: 'jsearch', results });
+    if (prov === 'jsearch' || prov === 'all') {
+      const jobs = await fetchJSearchJobs(q, loc, cntry, apiKey);
+      return res.json({ jobs, fromCache: false });
 
     } else if (prov === 'adzuna') {
-      const adzunaPage = 1;
-      const url = `https://baskarm28-adzuna-v1.p.rapidapi.com/jobs/${encodeURIComponent(cntry)}/search/${adzunaPage}?what=${encodeURIComponent(q)}&where=${encodeURIComponent(loc)}&results_per_page=10`;
+      const adzunaCountry = cntry === 'all' ? 'gb' : cntry;
+      const url = `https://baskarm28-adzuna-v1.p.rapidapi.com/jobs/${encodeURIComponent(adzunaCountry)}/search/1?what=${encodeURIComponent(q)}&where=${encodeURIComponent(loc)}&results_per_page=10`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -673,24 +701,25 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
         }
       });
       const data = await response.json() as any;
-      const rawResults = (data.results || []).map((item: any) => ({
+      const rawJobs = (data.results || []).map((item: any) => ({
         id: item.id || `adzuna-${Math.random().toString(36).substring(2, 9)}`,
-        company: item.company?.display_name || item.company || 'Unknown Company',
-        role: item.title || `${q} in ${loc}`,
-        salary: item.salary_min || item.salary_max ? `£${item.salary_min || 0}${item.salary_max ? ` - £${item.salary_max}` : ''} / yr` : 'Not Specified',
-        location: item.location?.display_name || item.location || loc,
-        link: item.redirect_url || `https://www.adzuna.co.uk/`,
-        notes: item.description ? item.description.substring(0, 200) + '...' : 'Adzuna Job Listing',
-        matchScore: Math.floor(Math.random() * 15) + 80
+        title: item.title || q,
+        company: item.company?.display_name || 'Unknown Company',
+        location: item.location?.display_name || loc,
+        salary: item.salary_min ? `£${item.salary_min}${item.salary_max ? ` – £${item.salary_max}` : ''} / yr` : 'Not Specified',
+        url: item.redirect_url || 'https://www.adzuna.co.uk/',
+        description: item.description ? item.description.substring(0, 300) + '...' : 'Adzuna Job Listing',
+        source: 'Adzuna' as const,
+        date_posted: item.created ? item.created.split('T')[0] : undefined
       }));
-
-      const results = enrichSearchResults(rawResults, q, loc, cntry, comp, 'adzuna');
-      return res.json({ provider: 'adzuna', results });
+      // Worldwide fallback via JSearch if adzuna returns nothing
+      const jobs = rawJobs.length > 0 ? rawJobs : await fetchJSearchJobs(q, loc, 'all', apiKey);
+      return res.json({ jobs, fromCache: false });
 
     } else if (prov === 'indeed') {
-      let rawResults: any[] = [];
+      let rawJobs: any[] = [];
       try {
-        const url = `https://indeed12.p.rapidapi.com/jobs/search?query=${encodeURIComponent(q)}&location=${encodeURIComponent(loc)}&locality=${encodeURIComponent(cntry)}&page_id=1`;
+        const url = `https://indeed12.p.rapidapi.com/jobs/search?query=${encodeURIComponent(q)}&location=${encodeURIComponent(loc)}&locality=${encodeURIComponent(cntry === 'all' ? 'us' : cntry)}&page_id=1`;
         const response = await fetch(url, {
           method: 'GET',
           headers: {
@@ -700,26 +729,25 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
           }
         });
         const data = await response.json() as any;
-        const rawJobs = data.jobs || data.data || [];
-        rawResults = rawJobs.map((item: any) => ({
+        rawJobs = (data.jobs || data.data || []).map((item: any) => ({
           id: item.id || `indeed-${Math.random().toString(36).substring(2, 9)}`,
+          title: item.title || item.role || 'Job Position',
           company: item.company || comp || 'Indeed Company',
-          role: item.title || item.role || 'Job Position',
-          salary: item.salary || 'Not Specified',
           location: item.location || loc,
-          link: item.link || `https://www.indeed.com/q-${encodeURIComponent(q || 'job')}-jobs.html`,
-          notes: item.summary || item.description || 'Indeed Job Listing',
-          matchScore: Math.floor(Math.random() * 15) + 80
+          salary: item.salary || 'Not Specified',
+          url: item.link || `https://www.indeed.com/q-${encodeURIComponent(q)}-jobs.html`,
+          description: item.summary || item.description || 'Indeed Job Listing',
+          source: 'Indeed' as const,
+          date_posted: undefined
         }));
       } catch (innerErr) {
-        console.error('Indeed lookup failed, using enricher:', innerErr);
+        console.error('Indeed lookup failed:', innerErr);
       }
-
-      const results = enrichSearchResults(rawResults, q, loc, cntry, comp, 'indeed');
-      return res.json({ provider: 'indeed', results });
+      const jobs = rawJobs.length > 0 ? rawJobs : await fetchJSearchJobs(q, loc, 'all', apiKey);
+      return res.json({ jobs, fromCache: false });
 
     } else if (prov === 'linkedin') {
-      let rawResults: any[] = [];
+      let rawJobs: any[] = [];
       try {
         const url = `https://linkedin-data-api.p.rapidapi.com/search-jobs?keywords=${encodeURIComponent(q)}&locationId=92000000&datePosted=anyTime&sort=mostRelevant`;
         const response = await fetch(url, {
@@ -731,36 +759,139 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
           }
         });
         const data = await response.json() as any;
-        const rawJobs = data.data || data.items || data.jobs || [];
-        rawResults = rawJobs.map((item: any) => ({
+        rawJobs = (data.data || data.items || data.jobs || []).map((item: any) => ({
           id: item.id || `linkedin-${Math.random().toString(36).substring(2, 9)}`,
+          title: item.title || 'Developer Position',
           company: item.company?.name || item.companyName || 'LinkedIn Partner',
-          role: item.title || 'Developer Position',
+          location: item.location || 'Worldwide',
           salary: item.salary || 'Not Specified',
-          location: item.location || 'Remote (US)',
-          link: item.url || item.jobUrl || item.navigationUrl || 'https://www.linkedin.com',
-          notes: 'LinkedIn premium listing matching ' + q,
-          matchScore: Math.floor(Math.random() * 15) + 80
+          url: item.url || item.jobUrl || item.navigationUrl || 'https://www.linkedin.com/jobs',
+          description: `LinkedIn listing: ${q}`,
+          source: 'LinkedIn' as const,
+          date_posted: undefined
         }));
       } catch (innerErr) {
-        console.error('LinkedIn API failed, using enricher:', innerErr);
+        console.error('LinkedIn API failed:', innerErr);
       }
+      const jobs = rawJobs.length > 0 ? rawJobs : await fetchJSearchJobs(q, loc, 'all', apiKey);
+      return res.json({ jobs, fromCache: false });
 
-      const results = enrichSearchResults(rawResults, q, loc, cntry, comp, 'linkedin');
-      return res.json({ provider: 'linkedin', results });
     } else {
       return res.status(400).json({ error: 'Unsupported provider requested.' });
     }
   } catch (error: any) {
     console.error('RapidAPI job search error:', error);
-    const results = enrichSearchResults([], q, loc, cntry, comp, prov);
-    return res.json({
-      provider: prov,
-      isFallback: true,
-      error: error.message,
-      results
-    });
+    // Last-resort: try JSearch worldwide
+    try {
+      const jobs = await fetchJSearchJobs(q, '', 'all', process.env.RAPIDAPI_KEY || '');
+      return res.json({ jobs, fromCache: false, note: 'Worldwide fallback results' });
+    } catch {
+      return res.status(500).json({ error: 'Job search is temporarily unavailable. Please try again later.' });
+    }
   }
+});
+
+// ==========================================
+// API ROUTE: CV File Upload & Text Extraction
+// ==========================================
+const cvUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowedExt = ['.pdf', '.doc', '.docx'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(file.mimetype) && allowedExt.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF and DOCX files are permitted.'));
+    }
+  }
+});
+
+app.post('/api/gemini/analyze-cv-file', aiLimiter, cvUpload.single('cv'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No CV file was uploaded.' });
+  }
+
+  const targetRole = String(req.body?.targetRole || 'Software Engineer').trim();
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  let cvText = '';
+
+  try {
+    if (ext === '.pdf') {
+      const parsed = await pdfParse(req.file.buffer);
+      cvText = parsed.text || '';
+    } else if (ext === '.docx' || ext === '.doc') {
+      const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+      cvText = result.value || '';
+    } else {
+      return res.status(400).json({ error: 'Unsupported file type. Only PDF and DOCX are accepted.' });
+    }
+  } catch (parseErr: any) {
+    console.error('[CV-UPLOAD] File parse error:', parseErr);
+    return res.status(422).json({ error: 'Failed to extract text from the uploaded file. Please ensure it is a valid PDF or DOCX.' });
+  }
+
+  const cleanText = cvText.replace(/\s+/g, ' ').trim();
+  if (cleanText.length < 50) {
+    return res.status(422).json({ error: 'The uploaded CV appears to be empty or unreadable. Please upload a text-based PDF or DOCX file.' });
+  }
+
+  if (isGeminiEnabled && ai) {
+    try {
+      const prompt = `You are an expert HR Lead and Technical Recruiter. Analyze the following candidate CV text for a target role of "${targetRole}".
+Evaluate the CV and return a JSON structure with exactly these keys:
+- "score" (number from 0 to 100 based on its fit, clarity, and metrics representation)
+- "strengths" (array of 3-4 strings detailing strong aspects)
+- "weaknesses" (array of 3-4 strings detailing areas of concern or missing depth)
+- "skillsFound" (array of skills detected in the text)
+- "skillsMissing" (array of 5-8 relevant skills typically expected for a "${targetRole}" that were not detected or weak)
+- "improvements" (array of objects, each with "section", "before", "after", "reason", showing exact bullet points or summaries rewritten to be impact-focused and quantitative)
+
+CV Text:
+${cleanText.substring(0, 8000)}`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              score: { type: Type.INTEGER },
+              strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+              weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
+              skillsFound: { type: Type.ARRAY, items: { type: Type.STRING } },
+              skillsMissing: { type: Type.ARRAY, items: { type: Type.STRING } },
+              improvements: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    section: { type: Type.STRING },
+                    before: { type: Type.STRING },
+                    after: { type: Type.STRING },
+                    reason: { type: Type.STRING }
+                  },
+                  required: ['section', 'before', 'after', 'reason']
+                }
+              }
+            },
+            required: ['score', 'strengths', 'weaknesses', 'skillsFound', 'skillsMissing', 'improvements']
+          }
+        }
+      });
+
+      const parsed = JSON.parse(response.text || '{}');
+      return res.json(parsed);
+    } catch (err: any) {
+      console.error('[CV-UPLOAD] Gemini analysis error:', err);
+    }
+  }
+
+  return res.status(503).json({ error: 'AI analysis is temporarily unavailable. Please try again later.' });
 });
 
 
