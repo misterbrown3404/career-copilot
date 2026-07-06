@@ -207,10 +207,13 @@ function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'abdulsalamjibril5@gmail.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Abdul@1051';
+
 // Pre-seed admin user with highly encrypted credentials if not exists
 async function seedAdminUser() {
-  const adminEmail = 'abdulsalamjibril5@gmail.com';
-  const encryptedAdminPass = hashPassword('Abdul@1051');
+  const adminEmail = ADMIN_EMAIL;
+  const encryptedAdminPass = hashPassword(ADMIN_PASSWORD);
 
   const { data: existingUser } = await supabase.from('users').select('email').eq('email', adminEmail).single();
 
@@ -791,7 +794,7 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
       resume_score: 0,
       email_verified: false,
       verification_code: code,
-      role: email.trim().toLowerCase() === 'abdulsalamjibril5@gmail.com' ? 'admin' : 'user'
+      role: email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user'
     });
 
     if (insertError) {
@@ -1030,10 +1033,11 @@ app.post('/api/auth/reset-password', authLimiter, async (req, res) => {
 // ==========================================
 
 // Get all registered users (admin only)
-app.get('/api/admin/users', generalLimiter, async (req, res) => {
-  const adminEmail = String(req.query.adminEmail || '').trim().toLowerCase();
+app.get('/api/admin/users', authMiddleware, generalLimiter, async (req, res) => {
+  const userEmail = (req as any).user?.email;
+  const userRole = (req as any).user?.role;
 
-  if (adminEmail !== 'abdulsalamjibril5@gmail.com') {
+  if (userRole !== 'admin' && userEmail?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
     return res.status(403).json({ error: 'Access denied. You do not have administrator permissions.' });
   }
 

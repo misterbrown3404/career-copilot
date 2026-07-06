@@ -213,7 +213,14 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
     setIsLoadingUsers(true);
     setUsersError(null);
     try {
-      const response = await fetch(`/api/admin/users?adminEmail=${encodeURIComponent(user.email)}`);
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch('/api/admin/users', { headers });
       if (!response.ok) {
         throw new Error('Access denied. Administrator privileges could not be verified.');
       }
@@ -299,9 +306,16 @@ export default function AdminDashboardView({ user, theme = 'dark' }: AdminDashbo
     setNewsletterResult(null);
 
     try {
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const response = await fetch('/api/admin/send-newsletter', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           adminEmail: user.email,
           subject: campaignSubject,
