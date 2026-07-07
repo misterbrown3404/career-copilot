@@ -819,6 +819,18 @@ const cvUpload = multer({
   }
 });
 
+async function ensurePdfRuntimeGlobals() {
+  if (globalThis.DOMMatrix && globalThis.ImageData && globalThis.Path2D) {
+    return;
+  }
+
+  const canvas = await import('@napi-rs/canvas');
+  const globalScope = globalThis as any;
+  globalScope.DOMMatrix ||= canvas.DOMMatrix;
+  globalScope.ImageData ||= canvas.ImageData;
+  globalScope.Path2D ||= canvas.Path2D;
+}
+
 app.post('/api/gemini/analyze-cv-file', aiLimiter, cvUpload.single('cv'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No CV file was uploaded.' });
@@ -830,6 +842,7 @@ app.post('/api/gemini/analyze-cv-file', aiLimiter, cvUpload.single('cv'), async 
 
   try {
     if (ext === '.pdf') {
+      await ensurePdfRuntimeGlobals();
       const { PDFParse } = await import('pdf-parse');
       const parser = new PDFParse({ data: req.file.buffer });
       try {
