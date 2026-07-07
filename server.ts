@@ -11,12 +11,6 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import multer from 'multer';
-import { createRequire } from 'module';
-
-// Use createRequire for CJS packages when Vercel imports this file as ESM.
-const _require = typeof require === 'function' ? require : createRequire(import.meta.url);
-const pdfParse = _require('pdf-parse');
-const mammoth = _require('mammoth');
 
 dotenv.config();
 
@@ -836,9 +830,16 @@ app.post('/api/gemini/analyze-cv-file', aiLimiter, cvUpload.single('cv'), async 
 
   try {
     if (ext === '.pdf') {
-      const parsed = await pdfParse(req.file.buffer);
-      cvText = parsed.text || '';
+      const { PDFParse } = await import('pdf-parse');
+      const parser = new PDFParse({ data: req.file.buffer });
+      try {
+        const parsed = await parser.getText();
+        cvText = parsed.text || '';
+      } finally {
+        await parser.destroy();
+      }
     } else if (ext === '.docx' || ext === '.doc') {
+      const mammoth = await import('mammoth');
       const result = await mammoth.extractRawText({ buffer: req.file.buffer });
       cvText = result.value || '';
     } else {
