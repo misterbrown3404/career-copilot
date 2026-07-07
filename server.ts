@@ -13,8 +13,8 @@ import { Resend } from 'resend';
 import multer from 'multer';
 import { createRequire } from 'module';
 
-// Use createRequire for CJS packages (pdf-parse, mammoth) in bundled output
-const _require = createRequire(__filename);
+// Use createRequire for CJS packages when Vercel imports this file as ESM.
+const _require = typeof require === 'function' ? require : createRequire(import.meta.url);
 const pdfParse = _require('pdf-parse');
 const mammoth = _require('mammoth');
 
