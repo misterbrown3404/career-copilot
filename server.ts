@@ -214,11 +214,17 @@ function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'abdulsalamjibril5@gmail.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Abdul@1051';
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'abdulsalamjibril5@gmail.com').trim();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (process.env.VERCEL === '1' ? '' : 'Abdul@1051');
+let adminSeedPromise: Promise<void> | null = null;
 
 // Pre-seed admin user with highly encrypted credentials if not exists
 async function seedAdminUser() {
+  if (!ADMIN_PASSWORD) {
+    console.warn('[SEED] ADMIN_PASSWORD is not set. Skipping admin credential sync.');
+    return;
+  }
+
   const adminEmail = ADMIN_EMAIL;
   const encryptedAdminPass = hashPassword(ADMIN_PASSWORD);
 
@@ -244,6 +250,16 @@ async function seedAdminUser() {
     if (error) throw new Error(`Failed to update admin: ${error.message}`);
     console.log('[SEED] Admin credentials secured');
   }
+}
+
+async function ensureAdminUserSeeded() {
+  if (!adminSeedPromise) {
+    adminSeedPromise = seedAdminUser().catch((err) => {
+      adminSeedPromise = null;
+      throw err;
+    });
+  }
+  return adminSeedPromise;
 }
 
 
@@ -1009,7 +1025,12 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
   }
 
   try {
-    const { data: user, error: fetchError } = await supabase.from('users').select('*').eq('email', email.trim()).single();
+    const normalizedEmail = email.trim();
+    if (normalizedEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      await ensureAdminUserSeeded();
+    }
+
+    const { data: user, error: fetchError } = await supabase.from('users').select('*').eq('email', normalizedEmail).single();
     if (fetchError || !user) {
       console.error('[AUTH] Verify fetch error:', fetchError);
       return res.status(404).json({ error: 'Account not found. If you just registered, the database may still be initializing or the registration insert failed.' });
@@ -1024,7 +1045,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     }
 
     if (isPlaintextMatch) {
-      await supabase.from('users').update({ password: encryptedPasswordInput }).eq('email', email.trim());
+      await supabase.from('users').update({ password: encryptedPasswordInput }).eq('email', normalizedEmail);
     }
 
     const tokenPayload = { email: user.email, role: user.role || 'user' };
