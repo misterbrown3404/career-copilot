@@ -16,6 +16,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { InterviewSession, InterviewQuestion, UserProfile } from '../types';
+import { fetchJson } from '../utils/apiClient';
 
 interface InterviewCoachViewProps {
   user: UserProfile;
@@ -84,21 +85,20 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
     const activeQ = session.questions[session.currentIndex];
 
     try {
-      const response = await fetch('/api/gemini/interview-feedback', {
+      const data = await fetchJson<{ score: number; feedback: string }>('/api/gemini/interview-question', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: activeQ.question,
-          answer: userAnswer,
-          role: session.role
+          sessionState: {
+            role: session.role,
+            type: session.type,
+            difficulty: session.difficulty,
+            questions: session.questions,
+            currentIndex: session.currentIndex
+          },
+          lastAnswer: userAnswer
         })
       });
-
-      if (!response.ok) {
-        throw new Error('Feedback handler failed.');
-      }
-
-      const data = await response.json();
       setActiveFeedback(data);
 
       // Save answer details onto the current question

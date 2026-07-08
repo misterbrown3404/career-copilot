@@ -84,7 +84,17 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 
-app.use(express.json());
+app.use((req, res, next) => {
+  // Surface malformed JSON bodies as a clean 400 JSON error instead of letting
+  // the parser throw an unhandled error (which, on serverless runtimes, can
+  // bubble up as an HTML error page and trigger a client "is not valid JSON").
+  express.json()(req, res, (err: any) => {
+    if (err) {
+      return res.status(400).json({ error: 'Invalid JSON payload.' });
+    }
+    next();
+  });
+});
 
 // ==========================================
 // DEEP SECURITY SANITIZATION MIDDLEWARE

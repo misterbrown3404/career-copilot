@@ -17,6 +17,7 @@ import {
 import { ResumeDetails, UserProfile } from '../types';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+import { fetchJson } from '../utils/apiClient';
 
 interface ResumeLabViewProps {
   resumeDetails: ResumeDetails;
@@ -32,6 +33,7 @@ export default function ResumeLabView({ resumeDetails, user, setResumeDetails, t
   const [isImproving, setIsImproving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [improvedResult, setImprovedResult] = useState<{ optimized: string; reason: string } | null>(null);
+  const [improvedError, setImprovedError] = useState<string | null>(null);
 
   // Experience operations
   const handlePersonalChange = (field: keyof ResumeDetails['personal'], value: string) => {
@@ -155,22 +157,18 @@ export default function ResumeLabView({ resumeDetails, user, setResumeDetails, t
     if (!bulletDraft.trim()) return;
     setIsImproving(true);
     setImprovedResult(null);
+    setImprovedError(null);
 
     try {
-      const response = await fetch('/api/gemini/optimize-bullet', {
+      const data = await fetchJson<{ optimized: string; reason: string }>('/api/gemini/generate-bullets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bullet: bulletDraft, targetRole: user.targetRole || 'Software Architect' })
       });
-
-      if (!response.ok) {
-        throw new Error('Failure response from server');
-      }
-
-      const data = await response.json();
       setImprovedResult(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error optimizing resume bullet point:', err);
+      setImprovedError(err?.message || 'Failed to optimize bullet. Please try again.');
     } finally {
       setIsImproving(false);
     }
@@ -728,6 +726,11 @@ export default function ResumeLabView({ resumeDetails, user, setResumeDetails, t
             </div>
 
             {/* Optimized results wrapper */}
+            {improvedError && (
+              <div className={`p-4 rounded-lg border border-red-500/30 bg-red-950/20 text-red-300 text-xs`}>
+                {improvedError}
+              </div>
+            )}
             {improvedResult && (
               <div className={`p-4 rounded-lg border space-y-3 animate-fadeIn ${
                 isLight ? 'bg-indigo-50/50 border-indigo-100' : 'bg-green-950/10 border-green-900/10'
