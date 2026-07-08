@@ -72,7 +72,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://api.supabase.com", "https://jsearch.p.rapidapi.com", "https://baskarm28-adzuna-v1.p.rapidapi.com", "https://indeed12.p.rapidapi.com", "https://linkedin-data-a[...]
+      connectSrc: ["'self'", "https://api.supabase.com", "https://jsearch.p.rapidapi.com", "https://baskarm28-adzuna-v1.p.rapidapi.com", "https://indeed12.p.rapidapi.com", "https://linkedin-data-api.p.rapidapi.com"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
@@ -399,7 +399,7 @@ app.post('/api/gemini/generate-bullets', aiLimiter, async (req, res) => {
 
   if (isGeminiEnabled && ai) {
     try {
-      const prompt = `You are a resume writing expert. Rewrite the following resume bullet point to make it highly professional, metric-driven, and focused on accomplishments for a target role of[...]
+      const prompt = `You are a resume writing expert. Rewrite the following resume bullet point to make it highly professional, metric-driven, and focused on accomplishments for a target role of "${targetRole}".
 Return a JSON object with:
 - "optimized" (the rewritten bullet point string)
 - "reason" (a 1-sentence explanation of why this rewrite is better)`;
@@ -752,7 +752,7 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
 
     } else if (prov === 'adzuna') {
       const adzunaCountry = cntry === 'all' ? 'gb' : cntry;
-      const url = `https://baskarm28-adzuna-v1.p.rapidapi.com/jobs/${encodeURIComponent(adzunaCountry)}/search/1?what=${encodeURIComponent(q)}&where=${encodeURIComponent(loc)}&results_per_page=10[...]
+      const url = `https://baskarm28-adzuna-v1.p.rapidapi.com/jobs/${encodeURIComponent(adzunaCountry)}/search/1?what=${encodeURIComponent(q)}&where=${encodeURIComponent(loc)}&results_per_page=10`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -780,7 +780,7 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
     } else if (prov === 'indeed') {
       let rawJobs: any[] = [];
       try {
-        const url = `https://indeed12.p.rapidapi.com/jobs/search?query=${encodeURIComponent(q)}&location=${encodeURIComponent(loc)}&locality=${encodeURIComponent(cntry === 'all' ? 'us' : cntry)}&[...]
+        const url = `https://indeed12.p.rapidapi.com/jobs/search?query=${encodeURIComponent(q)}&location=${encodeURIComponent(loc)}&locality=${encodeURIComponent(cntry === 'all' ? 'us' : cntry)}`;
         const response = await fetch(url, {
           method: 'GET',
           headers: {
