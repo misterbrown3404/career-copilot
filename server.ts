@@ -72,7 +72,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://api.supabase.com", "https://jsearch.p.rapidapi.com", "https://baskarm28-adzuna-v1.p.rapidapi.com", "https://indeed12.p.rapidapi.com", "https://linkedin-data-api.p.rapidapi.com", "https://generativelanguage.googleapis.com"],
+      connectSrc: ["'self'", "https://api.supabase.com", "https://jsearch.p.rapidapi.com", "https://baskarm28-adzuna-v1.p.rapidapi.com", "https://indeed12.p.rapidapi.com", "https://linkedin-data-a[...]
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
@@ -256,6 +256,45 @@ async function ensureAdminUserSeeded() {
   return adminSeedPromise;
 }
 
+// ==========================================
+// RETRY HELPER FUNCTION FOR GEMINI API
+// ==========================================
+/**
+ * Executes a Gemini API call with exponential backoff retry logic.
+ * Retries on 503 (Service Unavailable) errors, with 3 attempts by default.
+ * 
+ * @param fn - Async function that makes the Gemini API call
+ * @param maxRetries - Maximum number of retries (default: 3)
+ * @returns The result of the API call
+ * @throws The original error if all retries fail
+ */
+async function callGeminiWithRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3
+): Promise<T> {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      lastError = err;
+      const isServiceUnavailable = err?.status === 503 || err?.message?.includes('503');
+      const isLastAttempt = attempt === maxRetries;
+      
+      if (!isServiceUnavailable || isLastAttempt) {
+        throw err;
+      }
+      
+      // Exponential backoff: 1s, 2s, 4s
+      const delayMs = Math.pow(2, attempt - 1) * 1000;
+      console.warn(`[GEMINI-RETRY] Attempt ${attempt}/${maxRetries} failed with 503. Retrying in ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  
+  throw lastError;
+}
 
 // Initialize Gemini SDK with telemetry header
 const apiKey = process.env.GEMINI_API_KEY;
@@ -305,37 +344,39 @@ Evaluate the CV and return a JSON structure with exactly these keys:
 CV Text:
 ${cvText}`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              score: { type: Type.INTEGER },
-              strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
-              weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
-              skillsFound: { type: Type.ARRAY, items: { type: Type.STRING } },
-              skillsMissing: { type: Type.ARRAY, items: { type: Type.STRING } },
-              improvements: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    section: { type: Type.STRING },
-                    before: { type: Type.STRING },
-                    after: { type: Type.STRING },
-                    reason: { type: Type.STRING }
-                  },
-                  required: ['section', 'before', 'after', 'reason']
+      const response = await callGeminiWithRetry(() =>
+        ai!.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                score: { type: Type.INTEGER },
+                strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+                weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
+                skillsFound: { type: Type.ARRAY, items: { type: Type.STRING } },
+                skillsMissing: { type: Type.ARRAY, items: { type: Type.STRING } },
+                improvements: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      section: { type: Type.STRING },
+                      before: { type: Type.STRING },
+                      after: { type: Type.STRING },
+                      reason: { type: Type.STRING }
+                    },
+                    required: ['section', 'before', 'after', 'reason']
+                  }
                 }
-              }
-            },
-            required: ['score', 'strengths', 'weaknesses', 'skillsFound', 'skillsMissing', 'improvements']
+              },
+              required: ['score', 'strengths', 'weaknesses', 'skillsFound', 'skillsMissing', 'improvements']
+            }
           }
-        }
-      });
+        })
+      );
 
       const parsed = JSON.parse(response.text || '{}');
       return res.json(parsed);
@@ -344,7 +385,7 @@ ${cvText}`;
     }
   }
 
-  return res.status(503).json({ error: 'AI analysis is temporarily unavailable. Please try again later.' });
+  return res.status(503).json({ error: 'Our CV analysis service is temporarily busy. Please try again in a few moments.' });
 });
 
 // ==========================================
@@ -358,26 +399,28 @@ app.post('/api/gemini/generate-bullets', aiLimiter, async (req, res) => {
 
   if (isGeminiEnabled && ai) {
     try {
-      const prompt = `You are a resume writing expert. Rewrite the following resume bullet point to make it highly professional, metric-driven, and focused on accomplishments for a target role of "${targetRole || 'Software Engineer'}".
+      const prompt = `You are a resume writing expert. Rewrite the following resume bullet point to make it highly professional, metric-driven, and focused on accomplishments for a target role of[...]
 Return a JSON object with:
 - "optimized" (the rewritten bullet point string)
 - "reason" (a 1-sentence explanation of why this rewrite is better)`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              optimized: { type: Type.STRING },
-              reason: { type: Type.STRING }
-            },
-            required: ['optimized', 'reason']
+      const response = await callGeminiWithRetry(() =>
+        ai!.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                optimized: { type: Type.STRING },
+                reason: { type: Type.STRING }
+              },
+              required: ['optimized', 'reason']
+            }
           }
-        }
-      });
+        })
+      );
 
       const parsed = JSON.parse(response.text || '{}');
       return res.json(parsed);
@@ -386,7 +429,7 @@ Return a JSON object with:
     }
   }
 
-  return res.status(503).json({ error: 'AI bullet optimization is temporarily unavailable. Please try again later.' });
+  return res.status(503).json({ error: 'Our bullet optimization service is temporarily busy. Please try again in a few moments.' });
 });
 
 // ==========================================
@@ -428,14 +471,14 @@ Keep your answers professional yet warm, and conversational. Speak directly as $
         history: precedingHistory
       });
 
-      const response = await chat.sendMessage({ message: lastMessageText });
+      const response = await callGeminiWithRetry(() => chat.sendMessage({ message: lastMessageText }));
       return res.json({ text: response.text });
     } catch (err) {
       console.error('Gemini mentor-chat error:', err);
     }
   }
 
-  return res.status(503).json({ error: 'AI mentor is temporarily unavailable. Please try again later.' });
+  return res.status(503).json({ error: 'Our mentor service is temporarily busy. Please try again in a few moments.' });
 });
 
 // ==========================================
@@ -460,46 +503,48 @@ Return a JSON array of exactly 4 objects. Each object must represent a learning 
 
 Ensure the roadmap nodes flow sequentially from foundation to advanced.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING },
-                title: { type: Type.STRING },
-                description: { type: Type.STRING },
-                duration: { type: Type.STRING },
-                status: { type: Type.STRING },
-                resources: {
-                  type: Type.ARRAY,
-                  items: {
+      const response = await callGeminiWithRetry(() =>
+        ai!.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  title: { type: Type.STRING },
+                  description: { type: Type.STRING },
+                  duration: { type: Type.STRING },
+                  status: { type: Type.STRING },
+                  resources: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        name: { type: Type.STRING },
+                        url: { type: Type.STRING }
+                      },
+                      required: ['name', 'url']
+                    }
+                  },
+                  project: {
                     type: Type.OBJECT,
                     properties: {
-                      name: { type: Type.STRING },
-                      url: { type: Type.STRING }
+                      title: { type: Type.STRING },
+                      description: { type: Type.STRING }
                     },
-                    required: ['name', 'url']
+                    required: ['title', 'description']
                   }
                 },
-                project: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    description: { type: Type.STRING }
-                  },
-                  required: ['title', 'description']
-                }
-              },
-              required: ['id', 'title', 'description', 'duration', 'status', 'resources', 'project']
+                required: ['id', 'title', 'description', 'duration', 'status', 'resources', 'project']
+              }
             }
           }
-        }
-      });
+        })
+      );
 
       const parsed = JSON.parse(response.text || '[]');
       return res.json(parsed);
@@ -508,7 +553,7 @@ Ensure the roadmap nodes flow sequentially from foundation to advanced.`;
     }
   }
 
-  return res.status(503).json({ error: 'AI roadmap generation is temporarily unavailable. Please try again later.' });
+  return res.status(503).json({ error: 'Our roadmap generation service is temporarily busy. Please try again in a few moments.' });
 });
 
 // ==========================================
@@ -535,21 +580,23 @@ Evaluate the candidate's answer and return a JSON structure with exactly these k
 - "score" (integer score from 0 to 100 assessing the correctness, completeness, and articulation of the answer)
 - "feedback" (a 2-3 sentence coaching note explaining what was strong, what was missing, and how they could improve this specific answer using standard professional keywords)`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.5-flash',
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                score: { type: Type.INTEGER },
-                feedback: { type: Type.STRING }
-              },
-              required: ['score', 'feedback']
+        const response = await callGeminiWithRetry(() =>
+          ai!.models.generateContent({
+            model: 'gemini-3.5-flash',
+            contents: prompt,
+            config: {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  score: { type: Type.INTEGER },
+                  feedback: { type: Type.STRING }
+                },
+                required: ['score', 'feedback']
+              }
             }
-          }
-        });
+          })
+        );
 
         const parsed = JSON.parse(response.text || '{}');
         return res.json(parsed);
@@ -561,17 +608,19 @@ Focus Area: ${type} (e.g. Technical, Behavioral, General)
 
 Return a JSON array of exactly 3 strings representing the questions. Ensure the questions probe deeply and are tailored specifically to this role and seniority.`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.5-flash',
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
+        const response = await callGeminiWithRetry(() =>
+          ai!.models.generateContent({
+            model: 'gemini-3.5-flash',
+            contents: prompt,
+            config: {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              }
             }
-          }
-        });
+          })
+        );
 
         const questionsArray = JSON.parse(response.text || '[]');
         return res.json({ questions: questionsArray });
@@ -581,7 +630,7 @@ Return a JSON array of exactly 3 strings representing the questions. Ensure the 
     }
   }
 
-  return res.status(503).json({ error: 'AI interview coaching is temporarily unavailable. Please try again later.' });
+  return res.status(503).json({ error: 'Our interview coaching service is temporarily busy. Please try again in a few moments.' });
 });
 
 // ==========================================
@@ -603,21 +652,23 @@ Structure it beautifully. Return a JSON object with:
 - "coverLetter" (the generated letter in text format, spaced with double-newlines)
 - "matchScore" (integer from 0 to 100 assessing how well the CV fits the target role)`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              coverLetter: { type: Type.STRING },
-              matchScore: { type: Type.INTEGER }
-            },
-            required: ['coverLetter', 'matchScore']
+      const response = await callGeminiWithRetry(() =>
+        ai!.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                coverLetter: { type: Type.STRING },
+                matchScore: { type: Type.INTEGER }
+              },
+              required: ['coverLetter', 'matchScore']
+            }
           }
-        }
-      });
+        })
+      );
 
       const parsed = JSON.parse(response.text || '{}');
       return res.json(parsed);
@@ -626,7 +677,7 @@ Structure it beautifully. Return a JSON object with:
     }
   }
 
-  return res.status(503).json({ error: 'AI application tailoring is temporarily unavailable. Please try again later.' });
+  return res.status(503).json({ error: 'Our application tailoring service is temporarily busy. Please try again in a few moments.' });
 });
 
 // ==========================================
@@ -701,7 +752,7 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
 
     } else if (prov === 'adzuna') {
       const adzunaCountry = cntry === 'all' ? 'gb' : cntry;
-      const url = `https://baskarm28-adzuna-v1.p.rapidapi.com/jobs/${encodeURIComponent(adzunaCountry)}/search/1?what=${encodeURIComponent(q)}&where=${encodeURIComponent(loc)}&results_per_page=10`;
+      const url = `https://baskarm28-adzuna-v1.p.rapidapi.com/jobs/${encodeURIComponent(adzunaCountry)}/search/1?what=${encodeURIComponent(q)}&where=${encodeURIComponent(loc)}&results_per_page=10[...]
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -729,7 +780,7 @@ app.get('/api/jobs/search', generalLimiter, async (req, res) => {
     } else if (prov === 'indeed') {
       let rawJobs: any[] = [];
       try {
-        const url = `https://indeed12.p.rapidapi.com/jobs/search?query=${encodeURIComponent(q)}&location=${encodeURIComponent(loc)}&locality=${encodeURIComponent(cntry === 'all' ? 'us' : cntry)}&page_id=1`;
+        const url = `https://indeed12.p.rapidapi.com/jobs/search?query=${encodeURIComponent(q)}&location=${encodeURIComponent(loc)}&locality=${encodeURIComponent(cntry === 'all' ? 'us' : cntry)}&[...]
         const response = await fetch(url, {
           method: 'GET',
           headers: {
@@ -854,10 +905,16 @@ app.post('/api/gemini/analyze-cv-file', aiLimiter, cvUpload.single('cv'), async 
       // GlobalWorkerOptions.workerSrc must be a string; getData() returns the
       // worker bundled as a base64 data: URL.
       pdfjs.GlobalWorkerOptions.workerSrc = getPdfWorkerData();
+      
+      // Configure standard font data URL to eliminate warnings
+      // This ensures pdfjs can properly render fonts in PDFs
+      pdfjs.GlobalWorkerOptions.standardFontDataUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/standard_fonts/`;
+      
       const doc = await pdfjs.getDocument({
         data: new Uint8Array(req.file.buffer),
         useWorkerFetch: false,
         isEvalSupported: false,
+        standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/standard_fonts/`
       }).promise;
       try {
         let text = '';
@@ -901,37 +958,39 @@ Evaluate the CV and return a JSON structure with exactly these keys:
 CV Text:
 ${cleanText.substring(0, 8000)}`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              score: { type: Type.INTEGER },
-              strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
-              weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
-              skillsFound: { type: Type.ARRAY, items: { type: Type.STRING } },
-              skillsMissing: { type: Type.ARRAY, items: { type: Type.STRING } },
-              improvements: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    section: { type: Type.STRING },
-                    before: { type: Type.STRING },
-                    after: { type: Type.STRING },
-                    reason: { type: Type.STRING }
-                  },
-                  required: ['section', 'before', 'after', 'reason']
+      const response = await callGeminiWithRetry(() =>
+        ai!.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                score: { type: Type.INTEGER },
+                strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+                weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
+                skillsFound: { type: Type.ARRAY, items: { type: Type.STRING } },
+                skillsMissing: { type: Type.ARRAY, items: { type: Type.STRING } },
+                improvements: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      section: { type: Type.STRING },
+                      before: { type: Type.STRING },
+                      after: { type: Type.STRING },
+                      reason: { type: Type.STRING }
+                    },
+                    required: ['section', 'before', 'after', 'reason']
+                  }
                 }
-              }
-            },
-            required: ['score', 'strengths', 'weaknesses', 'skillsFound', 'skillsMissing', 'improvements']
+              },
+              required: ['score', 'strengths', 'weaknesses', 'skillsFound', 'skillsMissing', 'improvements']
+            }
           }
-        }
-      });
+        })
+      );
 
       const parsed = JSON.parse(response.text || '{}');
       return res.json(parsed);
@@ -940,7 +999,7 @@ ${cleanText.substring(0, 8000)}`;
     }
   }
 
-  return res.status(503).json({ error: 'AI analysis is temporarily unavailable. Please try again later.' });
+  return res.status(503).json({ error: 'Our CV analysis service is temporarily busy. Please try again in a few moments.' });
 });
 
 
