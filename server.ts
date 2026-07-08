@@ -843,13 +843,32 @@ app.post('/api/gemini/analyze-cv-file', aiLimiter, cvUpload.single('cv'), async 
   try {
     if (ext === '.pdf') {
       await ensurePdfRuntimeGlobals();
-      const { PDFParse } = await import('pdf-parse');
-      const parser = new PDFParse({ data: req.file.buffer });
+      // Parse with pdfjs-dist directly, using the worker as an in-memory data
+      // URL (from pdf-parse/worker) so pdfjs NEVER resolves a worker from the
+      // filesystem. On Vercel's serverless runtime the pdf.worker.mjs side-file
+      // is absent from /var/task, which is what made the "fake worker" path
+      // throw: "Cannot find module .../pdf.worker.mjs". A data URL sidesteps
+      // filesystem resolution entirely.
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      const { getData: getPdfWorkerData } = await import('pdf-parse/worker');
+      // GlobalWorkerOptions.workerSrc must be a string; getData() returns the
+      // worker bundled as a base64 data: URL.
+      pdfjs.GlobalWorkerOptions.workerSrc = getPdfWorkerData();
+      const doc = await pdfjs.getDocument({
+        data: new Uint8Array(req.file.buffer),
+        useWorkerFetch: false,
+        isEvalSupported: false,
+      }).promise;
       try {
-        const parsed = await parser.getText();
-        cvText = parsed.text || '';
+        let text = '';
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map((it: any) => ('str' in it ? it.str : '')).join(' ') + '\n';
+        }
+        cvText = text;
       } finally {
-        await parser.destroy();
+        await doc.destroy();
       }
     } else if (ext === '.docx' || ext === '.doc') {
       const mammoth = await import('mammoth');
