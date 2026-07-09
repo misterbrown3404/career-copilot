@@ -923,7 +923,7 @@ app.post('/api/gemini/analyze-cv-file', aiLimiter, cvUpload.single('cv'), async 
       
       // Configure standard font data URL to eliminate warnings
       // This ensures pdfjs can properly render fonts in PDFs
-      pdfjs.GlobalWorkerOptions.standardFontDataUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/standard_fonts/`;
+      (pdfjs.GlobalWorkerOptions as any).standardFontDataUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/standard_fonts/`;
       
       const doc = await pdfjs.getDocument({
         data: new Uint8Array(req.file.buffer),
