@@ -158,6 +158,16 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
       }));
     } catch (err) {
       console.error('Error conducting mentor consultation:', err);
+      const errorMsg: ChatMessage = {
+        id: `msg-error-${Date.now()}`,
+        sender: 'assistant',
+        text: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setChatHistories(prev => ({
+        ...prev,
+        [selectedMentor.id]: [...updatedHistory, errorMsg]
+      }));
     } finally {
       setIsTyping(false);
     }

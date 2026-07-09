@@ -356,7 +356,7 @@ ${cvText}`;
 
       const response = await callGeminiWithRetry(() =>
         ai!.models.generateContent({
-          model: 'gemini-3.5-flash',
+          model: 'gemini-2.0-flash',
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
@@ -416,7 +416,7 @@ Return a JSON object with:
 
       const response = await callGeminiWithRetry(() =>
         ai!.models.generateContent({
-          model: 'gemini-3.5-flash',
+          model: 'gemini-2.0-flash',
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
@@ -473,7 +473,7 @@ Keep your answers professional yet warm, and conversational. Speak directly as $
       const precedingHistory = formattedHistory.slice(0, -1);
 
       const chat = ai.chats.create({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.0-flash',
         config: {
           systemInstruction,
           temperature: 0.7,
@@ -515,7 +515,7 @@ Ensure the roadmap nodes flow sequentially from foundation to advanced.`;
 
       const response = await callGeminiWithRetry(() =>
         ai!.models.generateContent({
-          model: 'gemini-3.5-flash',
+          model: 'gemini-2.0-flash',
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
@@ -592,7 +592,7 @@ Evaluate the candidate's answer and return a JSON structure with exactly these k
 
         const response = await callGeminiWithRetry(() =>
           ai!.models.generateContent({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-2.0-flash',
             contents: prompt,
             config: {
               responseMimeType: 'application/json',
@@ -612,28 +612,32 @@ Evaluate the candidate's answer and return a JSON structure with exactly these k
         return res.json(parsed);
       } else {
         // If generating a set of tailored questions (usually done once at startup)
-        const prompt = `You are an expert mock interviewer. Generate exactly 3 highly relevant and realistic interview questions for a "${role}" position.
+        const prompt = `You are an expert mock interviewer. Generate exactly 1 highly relevant and realistic interview question for a "${role}" position.
 Difficulty Level: ${difficulty}
 Focus Area: ${type} (e.g. Technical, Behavioral, General)
+Already asked questions: ${questions.map((q: any) => q.question).join(' | ') || 'none'}
 
-Return a JSON array of exactly 3 strings representing the questions. Ensure the questions probe deeply and are tailored specifically to this role and seniority.`;
+Return a JSON object with a single key "question" (string). Ensure it probes deeply and is tailored specifically to this role and seniority. Do not repeat already asked questions.`;
 
         const response = await callGeminiWithRetry(() =>
           ai!.models.generateContent({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-2.0-flash',
             contents: prompt,
             config: {
               responseMimeType: 'application/json',
               responseSchema: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
+                type: Type.OBJECT,
+                properties: {
+                  question: { type: Type.STRING }
+                },
+                required: ['question']
               }
             }
           })
         );
 
-        const questionsArray = JSON.parse(response.text || '[]');
-        return res.json({ questions: questionsArray });
+        const parsed = JSON.parse(response.text || '{}');
+        return res.json({ question: parsed.question, type, difficulty });
       }
     } catch (err) {
       console.error('Gemini interview-question error:', err);
@@ -664,7 +668,7 @@ Structure it beautifully. Return a JSON object with:
 
       const response = await callGeminiWithRetry(() =>
         ai!.models.generateContent({
-          model: 'gemini-3.5-flash',
+          model: 'gemini-2.0-flash',
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
@@ -970,7 +974,7 @@ ${cleanText.substring(0, 8000)}`;
 
       const response = await callGeminiWithRetry(() =>
         ai!.models.generateContent({
-          model: 'gemini-3.5-flash',
+          model: 'gemini-2.0-flash',
           contents: prompt,
           config: {
             responseMimeType: 'application/json',

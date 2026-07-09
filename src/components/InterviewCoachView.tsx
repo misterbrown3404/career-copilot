@@ -59,7 +59,8 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
       }
 
       const qData = await response.json() as InterviewQuestion;
-      
+      if (!qData.question) throw new Error('Invalid question response from server.');
+
       const newSession: InterviewSession = {
         id: `session-${Date.now()}`,
         role,
@@ -252,7 +253,7 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
                   }`}>Target Difficulty</label>
                   <select
                     value={difficulty}
-                    onChange={(e) => setDifficulty}
+                    onChange={(e) => setDifficulty(e.target.value as 'Entry' | 'Mid' | 'Senior')}
                     className={`w-full px-3.5 py-2 text-xs rounded-lg border focus:outline-none focus:ring-2 transition-colors ${
                       isLight 
                         ? 'border-neutral-200 bg-neutral-50 text-neutral-900 focus:ring-indigo-500/10 focus:border-indigo-500' 
