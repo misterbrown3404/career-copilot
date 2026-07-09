@@ -69,7 +69,7 @@ export default function TermsView({ theme = 'light', onBack }: StaticPageProps) 
         </div>
 
         <p className={`text-base leading-relaxed mb-12 max-w-2xl ${muted}`}>
-          These Terms of Service govern your use of Career Copilot. We've kept them as clear and readable as possible. If you have questions, reach out to us at <span className="text-indigo-500">legal@careercopilot.app</span>.
+          These Terms of Service govern your use of Career Copilot. We've kept them as clear and readable as possible. If you have questions, reach out to us at <span className="text-indigo-500">abdulsalamjibril5@gmail.com</span>.
         </p>
 
         <div className="space-y-0">
@@ -89,7 +89,7 @@ export default function TermsView({ theme = 'light', onBack }: StaticPageProps) 
 
         <div className={`mt-12 p-6 rounded-xl border ${border} ${subtle}`}>
           <h3 className={`font-semibold mb-2 ${isLight ? 'text-neutral-900' : 'text-white'}`}>Questions about these terms?</h3>
-          <p className={`text-sm ${muted}`}>Email us at <span className="text-indigo-500 font-medium">legal@careercopilot.app</span> and we'll respond within 48 hours.</p>
+          <p className={`text-sm ${muted}`}>Email us at <span className="text-indigo-500 font-medium">abdulsalamjibril5@gmail.com</span> and we'll respond within 48 hours.</p>
         </div>
       </main>
 

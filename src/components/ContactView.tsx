@@ -9,22 +9,17 @@ interface StaticPageProps {
 const channels = [
   {
     label: 'General enquiries',
-    email: 'hello@careercopilot.app',
+    email: 'abdulsalamjibril5@gmail.com',
     desc: 'Questions about the platform, features, or your account.',
   },
   {
     label: 'Privacy & data',
-    email: 'privacy@careercopilot.app',
+    email: 'abdulsalamjibril5@gmail.com',
     desc: 'Data access requests, deletion requests, or GDPR enquiries.',
   },
   {
-    label: 'Security',
-    email: 'security@careercopilot.app',
-    desc: 'Responsible disclosure of security vulnerabilities.',
-  },
-  {
     label: 'Legal',
-    email: 'legal@careercopilot.app',
+    email: 'abdulsalamjibril5@gmail.com',
     desc: 'Terms of service questions or legal correspondence.',
   },
 ];
@@ -92,7 +87,7 @@ export default function ContactView({ theme = 'light', onBack }: StaticPageProps
             <div className={`p-5 rounded-xl border ${border} ${subtle}`}>
               <p className={`text-xs font-mono uppercase tracking-widest ${muted} mb-2`}>Response times</p>
               <div className="space-y-2">
-                {[['General', '1 business day'], ['Privacy', '48 hours'], ['Security', '24 hours'], ['Legal', '2 business days']].map(([type, time]) => (
+                {[['General', '1 business day'], ['Privacy', '48 hours'], ['Legal', '2 business days']].map(([type, time]) => (
                   <div key={type} className="flex items-center justify-between">
                     <span className={`text-sm ${muted}`}>{type}</span>
                     <span className={`text-sm font-medium ${isLight ? 'text-neutral-900' : 'text-white'}`}>{time}</span>

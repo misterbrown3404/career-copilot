@@ -22,7 +22,7 @@ const sections = [
   },
   {
     title: 'Your rights',
-    body: `You have the right to access, correct, or delete any personal data we hold about you. You can update your profile information directly in the Settings page. To request a full data export or account deletion, contact us at privacy@careercopilot.app.\n\nIf you are located in the European Economic Area, you have additional rights under GDPR including the right to data portability and the right to lodge a complaint with your local supervisory authority.`,
+    body: `You have the right to access, correct, or delete any personal data we hold about you. You can update your profile information directly in the Settings page. To request a full data export or account deletion, contact us at abdulsalamjibril5@gmail.com.\n\nIf you are located in the European Economic Area, you have additional rights under GDPR including the right to data portability and the right to lodge a complaint with your local supervisory authority.`,
   },
   {
     title: 'Cookies',
@@ -86,7 +86,7 @@ export default function PrivacyView({ theme = 'light', onBack }: StaticPageProps
         {/* Contact box */}
         <div className={`mt-12 p-6 rounded-xl border ${border} ${subtle}`}>
           <h3 className={`font-semibold mb-2 ${isLight ? 'text-neutral-900' : 'text-white'}`}>Questions about your privacy?</h3>
-          <p className={`text-sm ${muted}`}>Email us at <span className="text-indigo-500 font-medium">privacy@careercopilot.app</span> and we'll respond within 48 hours.</p>
+          <p className={`text-sm ${muted}`}>Email us at <span className="text-indigo-500 font-medium">abdulsalamjibril5@gmail.com</span> and we'll respond within 48 hours.</p>
         </div>
       </main>
 

@@ -333,7 +333,7 @@ export default function LandingView({ onLogin, isLoggedIn, onNavigateToApp, them
         <div className={`max-w-7xl mx-auto px-6 sm:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs ${muted}`}>
           <span>© 2026 Career Copilot. All rights reserved.</span>
           <div className="flex items-center gap-6">
-            {(['Privacy', 'Terms', 'Security', 'Contact'] as const).map(l => (
+            {(['Privacy', 'Terms', 'Contact'] as const).map(l => (
               <button key={l} onClick={() => onFooterNav?.(l.toLowerCase() as any)}
                 className={`hover:${isLight ? 'text-neutral-900' : 'text-white'} transition-colors cursor-pointer`}>{l}</button>
             ))}

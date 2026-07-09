@@ -23,7 +23,6 @@ import SettingsView from './components/SettingsView';
 import AdminDashboardView from './components/AdminDashboardView';
 import PrivacyView from './components/PrivacyView';
 import TermsView from './components/TermsView';
-import SecurityView from './components/SecurityView';
 import ContactView from './components/ContactView';
 
 const emptyUserProfile: UserProfile = {
@@ -53,9 +52,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password'>('login');
-  const [footerPage, setFooterPage] = useState<'privacy' | 'terms' | 'security' | 'contact' | null>(() => {
+  const [footerPage, setFooterPage] = useState<'privacy' | 'terms' | 'contact' | null>(() => {
     const p = window.location.pathname.replace('/', '');
-    return ['privacy','terms','security','contact'].includes(p) ? p as any : null;
+    return ['privacy','terms','contact'].includes(p) ? p as any : null;
   });
   const [isLoadingData, setIsLoadingData] = useState(false);
 
@@ -279,7 +278,6 @@ export default function App() {
     const props = { theme, onBack: () => { setFooterPage(null); window.history.pushState({}, '', '/'); } };
     if (footerPage === 'privacy') return <ToastProvider><PrivacyView {...props} /></ToastProvider>;
     if (footerPage === 'terms') return <ToastProvider><TermsView {...props} /></ToastProvider>;
-    if (footerPage === 'security') return <ToastProvider><SecurityView {...props} /></ToastProvider>;
     if (footerPage === 'contact') return <ToastProvider><ContactView {...props} /></ToastProvider>;
   }
 
