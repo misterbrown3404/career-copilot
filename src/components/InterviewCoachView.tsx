@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { InterviewSession, InterviewQuestion, UserProfile } from '../types';
 import { fetchJson } from '../utils/apiClient';
+import AIErrorDialog from './AIErrorDialog';
 
 interface InterviewCoachViewProps {
   user: UserProfile;
@@ -30,15 +31,15 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
   
-  // Setup inputs
   const [role, setRole] = useState(user.targetRole);
   const [type, setType] = useState<'Technical' | 'Behavioral' | 'General'>('Technical');
   const [difficulty, setDifficulty] = useState<'Entry' | 'Mid' | 'Senior'>('Mid');
 
-  // Input states during active practice
   const [userAnswer, setUserAnswer] = useState('');
   const [isSubmittingAnswer, setIsSubmittingAnswer] = useState(false);
   const [activeFeedback, setActiveFeedback] = useState<{ score: number; feedback: string } | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [retryFn, setRetryFn] = useState<(() => void) | null>(null);
 
   const startInterviewSession = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,8 +73,10 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
       };
 
       setSession(newSession);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error compiling mock questions:', err);
+      setAiError(err?.message || 'Failed to start the interview session. Please try again.');
+      setRetryFn(() => () => startInterviewSession(e));
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +105,6 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
       });
       setActiveFeedback(data);
 
-      // Save answer details onto the current question
       const updatedQs = [...session.questions];
       updatedQs[session.currentIndex] = {
         ...activeQ,
@@ -111,13 +113,11 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
         feedback: data.feedback
       };
 
-      setSession(prev => prev ? {
-        ...prev,
-        questions: updatedQs
-      } : null);
-
-    } catch (err) {
+      setSession(prev => prev ? { ...prev, questions: updatedQs } : null);
+    } catch (err: any) {
       console.error('Failed to submit answer for review:', err);
+      setAiError(err?.message || 'Failed to evaluate your answer. Please try submitting again.');
+      setRetryFn(() => submitAnswer);
     } finally {
       setIsSubmittingAnswer(false);
     }
@@ -132,9 +132,7 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
       const response = await fetch('/api/gemini/interview-question', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionState: session
-        })
+        body: JSON.stringify({ sessionState: session })
       });
 
       if (!response.ok) {
@@ -146,16 +144,13 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
       const updatedQs = [...session.questions, qData];
       const nextIdx = session.currentIndex + 1;
 
-      setSession(prev => prev ? {
-        ...prev,
-        questions: updatedQs,
-        currentIndex: nextIdx
-      } : null);
-
+      setSession(prev => prev ? { ...prev, questions: updatedQs, currentIndex: nextIdx } : null);
       setUserAnswer('');
       setActiveFeedback(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Could not load next mock interview question:', err);
+      setAiError(err?.message || 'Failed to load the next question. Please try again.');
+      setRetryFn(() => handleNextQuestion);
     } finally {
       setIsLoading(false);
     }
@@ -163,16 +158,9 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
 
   const finishSession = () => {
     if (!session) return;
-    
-    // Calculate simple average score
     const total = session.questions.reduce((sum, q) => sum + (q.score || 0), 0);
     const avgScore = Math.round(total / session.questions.length);
-
-    setSession(prev => prev ? {
-      ...prev,
-      score: avgScore,
-      currentIndex: -1 // Mark as finalized
-    } : null);
+    setSession(prev => prev ? { ...prev, score: avgScore, currentIndex: -1 } : null);
   };
 
   const handleReset = () => {
@@ -185,6 +173,14 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
 
   return (
     <div className="space-y-6">
+      <AIErrorDialog
+        open={!!aiError}
+        message={aiError || ''}
+        onClose={() => setAiError(null)}
+        onRetry={retryFn ?? undefined}
+        theme={theme}
+      />
+
       {/* Header */}
       <div>
         <h1 className={`text-2xl font-display font-black tracking-tight flex items-center gap-2 uppercase ${
@@ -291,7 +287,7 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
               <span>Coaching Strategy</span>
             </h3>
             <ul className={`space-y-3.5 text-xs leading-relaxed list-disc pl-4 font-sans ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
-              <li><strong>The STAR Framework:</strong> Answer behavioral questions by explaining the **Situation, Task, Action**, and **Result**.</li>
+              <li><strong>The STAR Framework:</strong> Answer behavioral questions by explaining the Situation, Task, Action, and Result.</li>
               <li><strong>Clarity & Metrics:</strong> Don't just say what you did; explain the outcome with numbers.</li>
               <li><strong>Honesty:</strong> If you don't know an architectural answer, trace your logical mental steps to show problem-solving.</li>
             </ul>
@@ -301,12 +297,10 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
         /* ACTIVE MOCK SESSION SCREEN */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           
-          {/* Main Question & Answer Input Box */}
           <div className={`lg:col-span-8 border rounded-lg p-5 sm:p-6 flex flex-col justify-between space-y-6 transition-colors ${
             isLight ? 'bg-white border-neutral-200 text-neutral-950 shadow-sm' : 'bg-neutral-900 border-neutral-800 text-white'
           }`}>
             <div className="space-y-4 flex-1">
-              {/* Question metadata */}
               <div className="flex items-center justify-between border-b pb-2">
                 <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
                   isLight ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-green-950/40 border-green-900/20 text-green-400'
@@ -316,7 +310,6 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
                 <span className="text-xs text-neutral-400 font-mono font-bold">Category: {session.type}</span>
               </div>
 
-              {/* Active question card */}
               <div className={`p-4 rounded-xl border space-y-2.5 ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950 border-neutral-850'}`}>
                 <h4 className={`text-sm font-display font-black uppercase tracking-wide flex items-center gap-1.5 ${
                   isLight ? 'text-neutral-900' : 'text-white'
@@ -329,7 +322,6 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
                 </p>
               </div>
 
-              {/* Input section or static reviewed feedback */}
               {!activeFeedback ? (
                 <div className="space-y-2">
                   <label className={`block text-[10px] font-display font-bold uppercase tracking-wider ${
@@ -348,7 +340,6 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
                   />
                 </div>
               ) : (
-                /* INTERACTIVE CRITIQUE SCOREBOX */
                 <div className={`p-5 rounded-xl border space-y-4 animate-fadeIn ${
                   isLight ? 'bg-indigo-50/40 border-indigo-100' : 'bg-neutral-950 border-neutral-850'
                 }`}>
@@ -359,12 +350,10 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
                       <Sparkles className="w-4 h-4 text-green-400" />
                       <span>Recruiter Critique</span>
                     </h5>
-                    
                     <span className="inline-flex items-center gap-1 font-mono font-bold text-green-400 bg-green-950/40 border border-green-900/30 px-2 py-0.5 rounded text-xs">
                       <span>Score: {activeFeedback.score}/100</span>
                     </span>
                   </div>
-
                   <p className={`text-xs leading-relaxed text-justify font-sans ${isLight ? 'text-neutral-700' : 'text-neutral-300'}`}>
                     {activeFeedback.feedback}
                   </p>
@@ -372,7 +361,6 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
               )}
             </div>
 
-            {/* Bottom active controls */}
             <div className="flex items-center justify-between border-t border-neutral-850 pt-4 mt-2">
               <button
                 type="button"
@@ -430,7 +418,6 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
             </div>
           </div>
 
-          {/* Right Column: Panelist sidebar info */}
           <div className={`lg:col-span-4 border rounded-lg p-5 sm:p-6 flex flex-col justify-between transition-colors ${
             isLight ? 'bg-white border-neutral-200 text-neutral-950 shadow-sm' : 'bg-neutral-900 border-neutral-800 text-white'
           }`}>
@@ -466,7 +453,7 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
           </div>
         </div>
       ) : (
-        /* SUMMARY REPORT FINALIZE CARD */
+        /* SUMMARY REPORT */
         <div className={`border rounded-lg p-6 sm:p-8 max-w-2xl mx-auto text-center space-y-6 transition-colors ${
           isLight ? 'bg-white border-neutral-200 text-neutral-950 shadow-sm' : 'bg-neutral-900 border-neutral-800 text-white'
         }`}>
@@ -478,11 +465,10 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
             <span className="text-[10px] font-mono font-bold text-green-400 uppercase tracking-widest block">Consultation Completed</span>
             <h2 className="text-xl font-display font-black uppercase tracking-tight">Assessment Score report</h2>
             <p className="text-neutral-500 text-xs max-w-md mx-auto leading-relaxed">
-              Congratulations! You have completed the simulated interview questions. Below is your final score based on your structural delivery andSTAR alignment.
+              Congratulations! You have completed the simulated interview questions. Below is your final score based on your structural delivery and STAR alignment.
             </p>
           </div>
 
-          {/* Large final score board */}
           <div className="p-4 bg-neutral-950/20 border border-neutral-850 rounded-xl inline-block px-10">
             <div className="text-3xl font-display font-black text-green-400">{session.score}/100</div>
             <span className="text-[9.5px] font-mono font-bold text-neutral-400 uppercase tracking-wider block mt-1">Average Evaluation Grade</span>
@@ -506,7 +492,6 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
         </div>
       )}
 
-      {/* Full loading overlay */}
       {isLoading && (
         <div className="fixed inset-0 z-50 bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-neutral-900 rounded-lg p-6 sm:p-8 w-full max-w-sm text-center border border-neutral-850 space-y-4">
@@ -523,4 +508,3 @@ export default function InterviewCoachView({ user, theme = 'dark' }: InterviewCo
     </div>
   );
 }
-

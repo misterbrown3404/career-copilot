@@ -14,6 +14,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { RoadmapNode, UserProfile } from '../types';
+import AIErrorDialog from './AIErrorDialog';
 
 interface LearningRoadmapViewProps {
   user: UserProfile;
@@ -26,6 +27,7 @@ export default function LearningRoadmapView({ user, theme = 'dark' }: LearningRo
   const [nodes, setNodes] = useState<RoadmapNode[]>([]);
   const [selectedNode, setSelectedNode] = useState<RoadmapNode | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [aiError, setAiError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch or auto-generate on mount
@@ -206,6 +208,7 @@ export default function LearningRoadmapView({ user, theme = 'dark' }: LearningRo
 
   return (
     <div className="space-y-6">
+      <AIErrorDialog open={!!aiError} message={aiError||""} onClose={()=>setAiError(null)} theme={theme} />
       {/* View Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

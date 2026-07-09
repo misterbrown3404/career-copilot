@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { CVAnalysisResult, UserProfile } from '../types';
 import { sanitizeString } from '../utils/security';
+import AIErrorDialog from './AIErrorDialog';
 
 interface CVUploadViewProps {
   user: UserProfile;
@@ -34,6 +35,8 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<CVAnalysisResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [lastAction, setLastAction] = useState<(() => void) | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -130,13 +133,13 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
       if (!response.ok) {
         throw new Error(data.error || 'Analysis failed. Please try again.');
       }
-
       setAnalysisResult(data);
       if (data.score) updateUserScore(data.score);
       setUploadState('done');
     } catch (err: any) {
       console.error('Error analyzing CV:', err);
-      setErrorMessage(err.message || 'An unexpected error occurred. Please try again.');
+      setAiError(err.message || 'An unexpected error occurred. Please try again.');
+      setLastAction(() => () => handleAnalyze(e));
       setUploadState('error');
     } finally {
       clearInterval(interval);
@@ -167,6 +170,13 @@ export default function CVUploadView({ user, updateUserScore, onApplyImprovement
 
   return (
     <div className="space-y-6">
+      <AIErrorDialog
+        open={!!aiError}
+        message={aiError || ''}
+        onClose={() => setAiError(null)}
+        onRetry={lastAction ?? undefined}
+        theme={theme}
+      />
       {/* Header */}
       <div>
         <h1 className={`text-2xl font-display font-black tracking-tight flex items-center gap-2 uppercase ${

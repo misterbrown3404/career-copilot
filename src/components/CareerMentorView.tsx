@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { CareerMentor, ChatMessage, UserProfile } from '../types';
 import { initialMentors } from '../utils/dummyData';
+import AIErrorDialog from './AIErrorDialog';
 
 interface CareerMentorViewProps {
   user: UserProfile;
@@ -105,6 +106,8 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [lastMessage, setLastMessage] = useState('');
 
   const activeHistory = chatHistories[selectedMentor.id] || [];
 
@@ -115,6 +118,7 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
 
   const handleSendMessage = async (textToSend: string) => {
     if (!textToSend.trim() || isTyping) return;
+    setLastMessage(textToSend);
 
     const userMsg: ChatMessage = {
       id: `msg-user-${Date.now()}`,
@@ -156,8 +160,9 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
         ...prev,
         [selectedMentor.id]: [...updatedHistory, assistantMsg]
       }));
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error conducting mentor consultation:', err);
+      setAiError(err?.message || 'The mentor AI service is temporarily unavailable. Please try again.');
       const errorMsg: ChatMessage = {
         id: `msg-error-${Date.now()}`,
         sender: 'assistant',
@@ -205,6 +210,13 @@ export default function CareerMentorView({ user, theme = 'dark' }: CareerMentorV
 
   return (
     <div className="space-y-6">
+      <AIErrorDialog
+        open={!!aiError}
+        message={aiError || ''}
+        onClose={() => setAiError(null)}
+        onRetry={() => handleSendMessage(lastMessage)}
+        theme={theme}
+      />
       {/* View Header */}
       <div>
         <h1 className={`text-2xl font-bold tracking-tight flex items-center gap-2 ${

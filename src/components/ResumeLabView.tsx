@@ -18,6 +18,7 @@ import { ResumeDetails, UserProfile } from '../types';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 import { fetchJson } from '../utils/apiClient';
+import AIErrorDialog from './AIErrorDialog';
 
 interface ResumeLabViewProps {
   resumeDetails: ResumeDetails;
@@ -30,6 +31,7 @@ export default function ResumeLabView({ resumeDetails, user, setResumeDetails, t
   const isLight = theme === 'light';
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
   const [bulletDraft, setBulletDraft] = useState('');
+  const [aiError, setAiError] = useState(null);
   const [isImproving, setIsImproving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [improvedResult, setImprovedResult] = useState<{ optimized: string; reason: string } | null>(null);
@@ -205,6 +207,7 @@ export default function ResumeLabView({ resumeDetails, user, setResumeDetails, t
 
   return (
     <div className="space-y-6">
+      <AIErrorDialog open={!!aiError} message={aiError||""} onClose={()=>setAiError(null)} theme={theme} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

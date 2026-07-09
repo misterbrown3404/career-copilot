@@ -17,6 +17,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { JobApplication, ApplicationStatus, ResumeDetails } from '../types';
+import AIErrorDialog from './AIErrorDialog';
 
 const WORLD_COUNTRIES = [
   { code: 'us', name: 'United States' },
@@ -71,6 +72,7 @@ export default function AppTrackerView({ applications, setApplications, resumeDe
   const isLight = theme === 'light';
   const [selectedJob, setSelectedJob] = useState<JobApplication | null>(null);
   const [isAddingJob, setIsAddingJob] = useState(false);
+  const [aiError, setAiError] = useState(null);
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
 
   // New Job state
@@ -245,6 +247,7 @@ export default function AppTrackerView({ applications, setApplications, resumeDe
 
   return (
     <div className="space-y-6">
+      <AIErrorDialog open={!!aiError} message={aiError||""} onClose={()=>setAiError(null)} theme={theme} />
       {/* View Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
