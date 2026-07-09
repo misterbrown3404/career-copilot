@@ -457,10 +457,11 @@ app.post('/api/gemini/mentor-chat', aiLimiter, async (req, res) => {
 
   if (isGeminiEnabled && ai) {
     try {
-      // Format history for Gemini
-      const formattedHistory = messages.map(msg => ({
+      // Format history for Gemini — filter out any messages with empty text to avoid INVALID_ARGUMENT
+      const validMessages = messages.filter((msg: any) => typeof msg.text === 'string' && msg.text.trim().length > 0);
+      const formattedHistory = validMessages.map((msg: any) => ({
         role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }]
+        parts: [{ text: msg.text.trim() }]
       }));
 
       const systemInstruction = `You are ${mentorName}, working as a ${mentorRole}.
@@ -469,7 +470,7 @@ Provide highly realistic, practical, and highly encouraging advice to the user a
 Keep your answers professional yet warm, and conversational. Speak directly as ${mentorName} and never break character. Keep paragraphs concise and easy to read.`;
 
       // Grab the last message as prompt, and feed preceding messages as context or run chat
-      const lastMessageText = messages[messages.length - 1]?.text || 'Hello';
+      const lastMessageText = validMessages[validMessages.length - 1]?.text?.trim() || 'Hello';
       const precedingHistory = formattedHistory.slice(0, -1);
 
       const chat = ai.chats.create({
