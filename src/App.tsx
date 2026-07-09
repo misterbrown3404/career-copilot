@@ -21,6 +21,10 @@ import CareerMentorView from './components/CareerMentorView';
 import LearningRoadmapView from './components/LearningRoadmapView';
 import SettingsView from './components/SettingsView';
 import AdminDashboardView from './components/AdminDashboardView';
+import PrivacyView from './components/PrivacyView';
+import TermsView from './components/TermsView';
+import SecurityView from './components/SecurityView';
+import ContactView from './components/ContactView';
 
 const emptyUserProfile: UserProfile = {
   name: '',
@@ -49,6 +53,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password'>('login');
+  const [footerPage, setFooterPage] = useState<'privacy' | 'terms' | 'security' | 'contact' | null>(() => {
+    const p = window.location.pathname.replace('/', '');
+    return ['privacy','terms','security','contact'].includes(p) ? p as any : null;
+  });
   const [isLoadingData, setIsLoadingData] = useState(false);
 
   // Core synchronized application state
@@ -267,7 +275,15 @@ export default function App() {
     });
   };
 
-  if (!isLoggedIn) {
+  if (footerPage) {
+    const props = { theme, onBack: () => { setFooterPage(null); window.history.pushState({}, '', '/'); } };
+    if (footerPage === 'privacy') return <ToastProvider><PrivacyView {...props} /></ToastProvider>;
+    if (footerPage === 'terms') return <ToastProvider><TermsView {...props} /></ToastProvider>;
+    if (footerPage === 'security') return <ToastProvider><SecurityView {...props} /></ToastProvider>;
+    if (footerPage === 'contact') return <ToastProvider><ContactView {...props} /></ToastProvider>;
+  }
+
+    if (!isLoggedIn) {
     if (authView === 'forgot-password') {
       return (
         <ToastProvider>
@@ -291,6 +307,7 @@ export default function App() {
           toggleTheme={toggleTheme}
           onShowForgotPassword={() => setAuthView('forgot-password')}
           onShowResetPassword={() => setAuthView('reset-password')}
+          onFooterNav={(page) => { setFooterPage(page); window.history.pushState({}, '', '/' + page); }}
         />
       </ToastProvider>
     );
