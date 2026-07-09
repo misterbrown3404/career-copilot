@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Briefcase body -->
+  <rect x="12" y="26" width="40" height="26" rx="4" fill="white" opacity="0.95"/>
+  <!-- Briefcase handle -->
+  <path d="M24 26v-4a8 8 0 0 1 16 0v4" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- AI spark -->
+  <circle cx="32" cy="39" r="4" fill="url(#bg)"/>
+  <line x1="32" y1="33" x2="32" y2="31" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="47" x2="32" y2="45" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="26" y1="39" x2="24" y2="39" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="40" y1="39" x2="38" y2="39" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>

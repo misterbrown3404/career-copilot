@@ -317,48 +317,20 @@ export default function App() {
       {/* Main content frame */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
-        {/* Workspace responsive header */}
-        <header className={`hidden lg:flex items-center justify-between h-16 px-8 border-b transition-colors duration-300 ${
-          theme === 'light' ? 'border-neutral-200 bg-white' : 'border-neutral-800 bg-neutral-900'
+        {/* Workspace header */}
+        <header className={`hidden lg:flex items-center justify-between h-14 px-6 border-b transition-colors duration-200 ${
+          theme === 'light' ? 'border-neutral-200 bg-white' : 'border-neutral-800 bg-neutral-950'
         } sticky top-0 z-10`}>
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-display font-bold uppercase tracking-wider ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-500'}`}>Current Workspace</span>
-            <span className="text-neutral-400">/</span>
-            <span className={`text-xs font-display font-extrabold uppercase tracking-widest px-2.5 py-1 rounded border transition-colors ${
-              theme === 'light' 
-                ? 'bg-neutral-50 border-neutral-200 text-indigo-600 font-black' 
-                : 'bg-neutral-950 border-neutral-800 text-green-400'
-            }`}>
-              {activeTab === 'dashboard' ? 'Overview' : activeTab}
+            <span className={`text-xs ${theme === 'light' ? 'text-neutral-400' : 'text-neutral-500'}`}>Workspace</span>
+            <span className={`text-xs ${theme === 'light' ? 'text-neutral-300' : 'text-neutral-700'}`}>/</span>
+            <span className={`text-xs font-medium capitalize ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>
+              {activeTab === 'dashboard' ? 'Overview' : activeTab.replace('-', ' ')}
             </span>
           </div>
-
-          <div className="flex items-center gap-4 text-xs font-mono text-neutral-400">
-            {/* Header Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg border transition-all ${
-                theme === 'light' 
-                  ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-200 text-neutral-800' 
-                  : 'bg-neutral-900 hover:bg-neutral-850 border-neutral-800 text-neutral-200'
-              } cursor-pointer`}
-              title={theme === 'light' ? "Switch to Dark Theme" : "Switch to Light Theme"}
-            >
-              {theme === 'light' ? (
-                <div className="flex items-center gap-1.5 font-display text-[10px] font-bold uppercase tracking-wider">
-                  <Moon className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Dark Mode</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5 font-display text-[10px] font-bold uppercase tracking-wider">
-                  <Sun className="w-3.5 h-3.5 text-yellow-400" />
-                  <span>Light Mode</span>
-                </div>
-              )}
-            </button>
-            <span className="text-neutral-400">|</span>
-            <span>Container Ingress: <strong className={theme === 'light' ? 'text-indigo-600' : 'text-green-400'}>0.0.0.0:3000</strong></span>
-            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${theme === 'light' ? 'bg-indigo-600' : 'bg-green-400'}`}></span>
+          <div className={`flex items-center gap-2 text-xs ${theme === 'light' ? 'text-neutral-400' : 'text-neutral-500'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${theme === 'light' ? 'bg-emerald-500' : 'bg-emerald-400'}`} />
+            <span>Live</span>
           </div>
         </header>
 
